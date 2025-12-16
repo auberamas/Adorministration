@@ -1,10 +1,12 @@
+// Students and receptionists can create interventions
+// The staff can update interventions status
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
 import { pool } from "../db/pool.js";
 
 const router = Router();
 
-// Create intervention
+// Create an intervention request
 router.post("/", requireAuth, requireRole("student", "receptionist"), async (req, res, next) => {
   try {
     const { roomId, type, description } = req.body || {};
@@ -17,7 +19,7 @@ router.post("/", requireAuth, requireRole("student", "receptionist"), async (req
 
     let finalRoomId = null;
 
-    // Student: room is preset (take user's assigned room)
+    // Student can make an intervention request linked to their room
     if (req.user.role === "student") {
       const [urows] = await pool.query(
         "SELECT room_id, paid FROM users WHERE id=:id",
@@ -25,17 +27,18 @@ router.post("/", requireAuth, requireRole("student", "receptionist"), async (req
       );
       const u = urows[0];
       if (!u?.room_id) return res.status(400).json({ error: "No room assigned yet" });
-      // optional: require payment before interventions
-      // if (!u.paid) return res.status(400).json({ error: "Room not paid yet" });
+
 
       finalRoomId = u.room_id;
-    } else {
-      // Receptionist: must provide roomId
-      const n = Number(roomId);
-      if (!n) return res.status(400).json({ error: "roomId required" });
-      finalRoomId = n;
-    }
+    } 
+    // else {
+    //   // Receptionist must provide roomId
+    //   const n = Number(roomId);
+    //   if (!n) return res.status(400).json({ error: "roomId required" });
+    //   finalRoomId = n;
+    // }
 
+    // Insert the intervention as pending
     await pool.query(
       "INSERT INTO interventions (created_by, room_id, type, description, status) VALUES (:uid,:rid,:type,:desc,'pending')",
       { uid: req.user.sub, rid: finalRoomId, type, desc: description }

@@ -1,16 +1,18 @@
 <template>
   <div class="page">
+    <!-- Top bar : page title, role and logout button -->
     <div class="topbar">
       <h1 class="title">Dashboard</h1>
 
       <div class="topbarActions">
+        <!-- Shows the current user role -->
         <span class="pill">{{ user?.role }}</span>
         <button class="btn" @click="logout">Logout</button>
       </div>
     </div>
 
     <div class="grid">
-      <!-- STUDENT: PAYMENT REQUIRED -->
+       <!-- for student role : if admin approved a room student have to pay-->
       <div class="card" v-if="user?.role==='student' && me?.room_id && !me?.paid">
         <h2>Payment required</h2>
         <p class="muted">
@@ -22,13 +24,13 @@
         <p v-if="payError" class="error">{{ payError }}</p>
       </div>
 
-      <!-- MY PROFILE (NOT for receptionist) -->
-      <div class="card" v-if="user?.role !== 'receptionist'">
+      <!-- My profile : only for student -->
+      <div class="card" v-if="user?.role == 'student'">
         <div class="cardHeader">
           <h2>My profile</h2>
-          <button class="btn" @click="loadMe">Refresh</button>
         </div>
 
+        <!-- Show user data -->
         <div v-if="me" class="profile">
           <div class="kv"><span class="k">Name</span><span class="v">{{ me.name }}</span></div>
           <div class="kv"><span class="k">Username</span><span class="v">{{ me.username }}</span></div>
@@ -58,13 +60,14 @@
             <input
               v-else
               v-model="editPhone"
-              placeholder="10 digits"
+              placeholder="11 digits"
               inputmode="numeric"
-              maxlength="10"
-              @input="editPhone = editPhone.replace(/\\D/g,'').slice(0,10)"
+              maxlength="11"
+              @input="editPhone = editPhone.replace(/\\D/g,'').slice(0,11)"
             />
           </div>
 
+          <!-- Student can edit email/phone -->
           <div class="actions" v-if="user?.role==='student'">
             <button class="btn" v-if="!editProfile" @click="startEdit">Modify</button>
             <button class="btnPrimary" v-else @click="saveProfile" :disabled="savingProfile">
@@ -77,19 +80,18 @@
         </div>
       </div>
 
-      <!-- STUDENT: ROOMS -->
+      <!-- Student can choose a room (if has no room already) -->
       <div class="card" v-if="user?.role==='student' && !me?.room_id && !me?.requested_room_id">
         <h2>Choose a room</h2>
         <p class="muted">You currently don’t have a room. Click an available room to request it.</p>
-
-        <button class="btn" @click="loadAvailableRooms">Refresh rooms</button>
-
+        
+        <!-- List of available rooms -->
         <ul class="list">
           <li
             v-for="r in availableRooms"
             :key="r.id"
             class="clickRow"
-            @click="requestRoom(r.id)"
+            @click="openRoomConfirm(r)"
             title="Click to request this room"
           >
             {{ r.building ? r.building + " - " : "" }}{{ r.room_number }}
@@ -97,17 +99,38 @@
         </ul>
       </div>
 
-      <!-- STUDENT: PENDING REQUEST -->
+      <!-- Student need to confirm room request -->
+      <div v-if="user?.role==='student' && showRoomConfirm" class="modalOverlay" @click.self="closeRoomConfirm">
+        <div class="modalCard" role="dialog" aria-modal="true">
+          <h3 class="modalTitle">Confirm room request</h3>
+          <p class="muted" style="margin: 6px 0 12px;">
+            You are about to request:
+            <strong>
+              {{ selectedRoom?.building ? selectedRoom.building + " - " : "" }}{{ selectedRoom?.room_number }}
+            </strong>
+          </p>
+
+          <div class="modalActions">
+            <button class="btn" @click="closeRoomConfirm">Cancel</button>
+            <button class="btnPrimary" @click="confirmRoomRequest" :disabled="confirmingRoom">
+              {{ confirmingRoom ? "..." : "Confirm" }}
+            </button>
+          </div>
+
+          <p v-if="roomConfirmError" class="error">{{ roomConfirmError }}</p>
+        </div>
+      </div>
+
+      <!-- Student: request pending -->
       <div class="card" v-if="user?.role==='student' && !me?.room_id && me?.requested_room_id">
         <h2>Room request pending</h2>
         <p class="muted">Your request is pending administrator decision.</p>
       </div>
 
-      <!-- INTERVENTIONS -->
+      <!-- Interventions visible for everyone except admin -->
       <div class="card" v-if="user?.role !== 'admin'">
         <div class="cardHeader">
           <h2>Interventions</h2>
-          <button class="btn" @click="loadInterventions">Refresh</button>
         </div>
 
         <div v-if="['student','receptionist'].includes(user?.role)" class="box">
@@ -122,7 +145,6 @@
               :value="me?.room_number ? `Room ${me.room_number}` : 'No room yet'"
               disabled
             />
-            <input v-else v-model="newRoomId" placeholder="roomId" />
           </div>
 
           <textarea v-model="newDesc" placeholder="description"></textarea>
@@ -142,13 +164,9 @@
         </ul>
       </div>
 
-      <!-- RECEPTIONIST: BEHAVIOR -->
+      <!-- Receptionist: record behavior (deduct points) -->
       <div class="card" v-if="user?.role==='receptionist'">
         <h2>Record behavior</h2>
-
-        <button class="btn" @click="loadStudents" :disabled="loadingStudents">
-          {{ loadingStudents ? "..." : "Refresh students" }}
-        </button>
 
         <select v-model="selectedStudentId">
           <option disabled value="">Select a student</option>
@@ -185,16 +203,28 @@ import { useRouter } from "vue-router";
 import api, { setAuthToken } from "../api";
 
 const router = useRouter();
+
+// user's basics info are saved in localStorage after login
 const user = ref(null);
+
+// full user profile returned by backend (/api/me)
 const me = ref(null);
 
+// // lists used in user's interface
 const availableRooms = ref([]);
 const interventions = ref([]);
+
+// Error message
 const error = ref("");
 
 const newType = ref("cleaning");
-const newRoomId = ref("");
 const newDesc = ref("");
+
+// student room request confirmation
+const showRoomConfirm = ref(false);
+const selectedRoom = ref(null);
+const confirmingRoom = ref(false);
+const roomConfirmError = ref("");
 
 const editProfile = ref(false);
 const editEmail = ref("");
@@ -216,18 +246,26 @@ const behDesc = ref("");
 const behError = ref("");
 const loadingBehavior = ref(false);
 
+// Logout
 function logout() {
+  // Remove saved login data
   localStorage.removeItem("token");
+
   localStorage.removeItem("user");
+  // Remove token from API requests
   setAuthToken(null);
+
+  // Go back to login page
   router.push("/login");
 }
 
+// Load current user profile
 async function loadMe() {
   const { data } = await api.get("/api/me");
   me.value = data;
 }
 
+// Load available rooms 
 async function loadAvailableRooms() {
   const { data } = await api.get("/api/rooms/available");
   availableRooms.value = data;
@@ -236,6 +274,34 @@ async function loadAvailableRooms() {
 async function requestRoom(roomId) {
   await api.post("/api/rooms/request", { roomId });
   await loadMe();
+}
+
+function openRoomConfirm(room) {
+  roomConfirmError.value = "";
+  selectedRoom.value = room;
+  showRoomConfirm.value = true;
+}
+
+function closeRoomConfirm() {
+  showRoomConfirm.value = false;
+  selectedRoom.value = null;
+  confirmingRoom.value = false;
+  roomConfirmError.value = "";
+}
+
+// Confirm button inside the modal
+async function confirmRoomRequest() {
+  if (!selectedRoom.value?.id) return;
+  confirmingRoom.value = true;
+  roomConfirmError.value = "";
+  try {
+    await requestRoom(selectedRoom.value.id);
+    closeRoomConfirm();
+  } catch (e) {
+    roomConfirmError.value = e?.response?.data?.error || e.message || "Request failed";
+  } finally {
+    confirmingRoom.value = false;
+  }
 }
 
 async function loadInterventions() {
@@ -249,10 +315,6 @@ async function loadInterventions() {
 
 async function createIntervention() {
   const payload = { type: newType.value, description: newDesc.value };
-
-  if (user.value?.role !== "student") {
-    payload.roomId = Number(newRoomId.value);
-  }
 
   await api.post("/api/interventions", payload);
   newDesc.value = "";
@@ -303,6 +365,7 @@ async function payRoom() {
   }
 }
 
+// Receptionist load students list for behavior dropdown
 async function loadStudents() {
   loadingStudents.value = true;
   behError.value = "";
@@ -322,7 +385,7 @@ async function loadStudents() {
   }
 }
 
-
+// Receptionist record behavior (deduct points)
 async function recordBehavior() {
   behError.value = "";
 
@@ -357,17 +420,25 @@ async function recordBehavior() {
   }
 }
 
+// Main function when dashboard loads
 async function init() {
+
+  // Check if token exists (if not, go login)
   const token = localStorage.getItem("token");
   if (!token) return router.push("/login");
+
+  // Attach token to API requests
   setAuthToken(token);
 
+  // Read basic user info from localStorage
   user.value = JSON.parse(localStorage.getItem("user") || "null");
   if (user.value?.role === "admin") return router.push("/admin");
 
   try {
+    // Load data needed for the dashboard
     await loadMe();
 
+    // If admin, redirect to admin page
     if (user.value?.role === "student") {
       if (!me.value?.room_id && !me.value?.requested_room_id) await loadAvailableRooms();
     }
@@ -382,133 +453,6 @@ async function init() {
   }
 }
 
+// Run init() automatically when the page opens
 onMounted(init);
 </script>
-<!-- 
-<style scoped>
-/* CONTAIN EVERYTHING */
-.wrap {
-  min-height: 100vh;
-  padding: 24px;
-  background: #0b1220;
-  color: #eaf0ff;
-  max-width: 1200px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-* { box-sizing: border-box; }
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  gap: 12px;
-}
-
-.topbarActions { display:flex; align-items:center; gap:10px; }
-
-.title { font-size: 34px; margin: 0; }
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-}
-
-.card {
-  background: rgba(20, 30, 60, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 16px;
-  overflow: hidden; /* prevents overflow visuals */
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  gap: 10px;
-}
-
-.pill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-}
-
-.btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btnPrimary {
-  background: #2f6bff;
-  color: #fff;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.btnDanger {
-  background: #d64a4a;
-  color: #fff;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-input, select, textarea {
-  width: 100%;
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #263a62;
-  background: #0b152b;
-  color: #e7eefc;
-  box-sizing: border-box;
-}
-
-textarea { min-height: 90px; resize: vertical; }
-
-.row { display:flex; gap:10px; align-items: stretch; }
-.row > * { flex: 1; }
-
-.list { padding-left: 18px; margin: 10px 0 0; }
-.list li { margin: 8px 0; }
-
-.muted { opacity: 0.75; }
-
-.profile { margin-top: 8px; display:flex; flex-direction:column; gap:10px; }
-.kv {
-  display:flex;
-  justify-content:space-between;
-  gap:14px;
-  background:#0b152b;
-  border:1px solid #263a62;
-  padding:10px 12px;
-  border-radius:12px;
-}
-.k { opacity: .75; }
-.v { font-weight: 600; }
-.actions { display:flex; gap:10px; margin-top: 10px; flex-wrap: wrap; }
-
-.box { margin-top: 10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08); }
-
-.clickRow { cursor:pointer; padding:6px 6px; border-radius:10px; }
-.clickRow:hover { background: rgba(255,255,255,0.06); }
-
-.error { margin-top: 12px; color: #ff7b7b; }
-</style> -->

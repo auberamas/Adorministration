@@ -1,17 +1,19 @@
+// The administrator can has an overview of the dormitory and can manage room request
+
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
 import { pool } from "../db/pool.js";
 
 const router = Router();
 
-// Admin guard once for all admin routes
+// Every routes in the file require the "admin" role
 router.use(requireAuth, requireRole("admin"));
 
 /**
  * ROOMS overview:
  * - show room occupied/available
  * - occupied by which student
- * - behavior score 0..20 (sum points clamped)
+ * - behavior score 0-20
  */
 router.get("/rooms-overview", requireAuth, requireRole("admin"), async (_req, res, next) => {
   try {
@@ -37,9 +39,7 @@ router.get("/rooms-overview", requireAuth, requireRole("admin"), async (_req, re
 });
 
 
-/**
- * Existing: list pending room requests
- */
+// List of pending room requests from students
 router.get("/room-requests", async (_req, res, next) => {
   try {
     const [rows] = await pool.query(
@@ -64,14 +64,7 @@ router.get("/room-requests", async (_req, res, next) => {
   }
 });
 
-/**
- * Decide request:
- * decision: "approve" | "reject"
- * - approve => assign room_id, clear request, set room occupied, send notification "pay"
- * - reject  => clear request, send notification "choose another"
- *
- * Requires DB table `notifications` (see schema change).
- */
+// The admin choose if the student can get the requested room
 router.post("/room-requests/:userId/decide", async (req, res, next) => {
   try {
     const userId = Number(req.params.userId);
@@ -81,13 +74,17 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
       return res.status(400).json({ error: "decision must be approve|reject" });
     }
 
+    // Retrieve the student's pending room request
     const [urows] = await pool.query(
       "SELECT id, requested_room_id FROM users WHERE id=? AND role='student'",
       [userId]
     );
     const requested = urows[0]?.requested_room_id;
+    
+    // Ensure a pending request exists
     if (!requested) return res.status(400).json({ error: "No pending request" });
-
+    
+    // The admin reject the request
     if (decision === "reject") {
       await pool.query("UPDATE users SET requested_room_id=NULL WHERE id=?", [userId]);
 
@@ -104,11 +101,13 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
       return res.json({ ok: true });
     }
 
-    // approve
+    // The admin approve the request : assign the room
     await pool.query(
       "UPDATE users SET room_id=?, requested_room_id=NULL, paid=0 WHERE id=?",
       [requested, userId]
     );
+
+    // Mark the room as occupied
     await pool.query("UPDATE rooms SET status='occupied' WHERE id=?", [requested]);
 
     // notify student to pay
@@ -127,9 +126,7 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
   }
 });
 
-/**
- * Optional (useful): list students (for manual assignment if you add it later)
- */
+// List students that paid their room
 router.get("/students", async (_req, res, next) => {
   try {
     const [rows] = await pool.query(

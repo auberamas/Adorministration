@@ -1,6 +1,8 @@
+// Load environment variables from the .env file into process.env
 import dotenv from "dotenv";
 dotenv.config();
 
+// If the variable is empty or missing an error is thrown
 function required(name, fallback=null) {
   const v = process.env[name] ?? fallback;
   if (v === null || v === undefined || v === "") {
@@ -10,12 +12,17 @@ function required(name, fallback=null) {
 }
 
 export const env = {
+  // HTTP server port
   PORT: Number(process.env.PORT || 4000),
+
+  // Database connection settings
   DB_HOST: required("DB_HOST", "localhost"),
   DB_PORT: Number(process.env.DB_PORT || 3306),
   DB_USER: required("DB_USER", "root"),
   DB_PASSWORD: process.env.DB_PASSWORD || "",
   DB_NAME: required("DB_NAME", "dormitory_db"),
+
+  // Secret key used to sign and verify JWT tokens
   JWT_SECRET: required("JWT_SECRET", "change_me_in_production"),
   CORS_ORIGINS: (process.env.CORS_ORIGINS || "").split(",").map(s=>s.trim()).filter(Boolean)
 };

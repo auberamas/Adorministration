@@ -1,10 +1,11 @@
+// Dislay the profile of the authentified user
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth.js";
 import { pool } from "../db/pool.js";
 
 const router = Router();
 
-// Return user + room_number + requested_room_number
+// Return user's informations
 router.get("/", requireAuth, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
@@ -29,7 +30,7 @@ router.get("/", requireAuth, async (req, res, next) => {
   }
 });
 
-// Student can update ONLY email + phone
+// Student can update only email and phone
 router.patch("/", requireAuth, async (req, res, next) => {
   try {
     let { email, phone } = req.body || {};
@@ -43,12 +44,12 @@ router.patch("/", requireAuth, async (req, res, next) => {
       }
     }
 
-    // Phone validation: digits only, exactly 10 digits
+    // Phone validation: digits only, exactly 11 digits
     let phoneDigits = null;
     if (phone !== undefined && phone !== null && String(phone).trim() !== "") {
       phoneDigits = String(phone).replace(/\D/g, "");
-      if (phoneDigits.length !== 10) {
-        return res.status(400).json({ error: "Phone must contain exactly 10 digits" });
+      if (phoneDigits.length !== 11) {
+        return res.status(400).json({ error: "Phone must contain exactly 11 digits" });
       }
     }
 
@@ -61,7 +62,7 @@ router.patch("/", requireAuth, async (req, res, next) => {
       }
     );
 
-    // Return updated user + room info
+    // Return updated profile
     const [rows] = await pool.query(
       `
       SELECT

@@ -101,9 +101,9 @@ INSERT INTO users (username, password_hash, role, name, email, phone, paid) VALU
 ('student8', '$2a$10$kyCfLf7oKzUEEBotEp5nAO84KQOcpjAa0rttDCDWlvg7XlewyA/gG', 'student', 'Fofie Faffal',   'gao.lin@seu.edu.cn',     '13800138007', 0),
 ('student9', '$2a$10$kyCfLf7oKzUEEBotEp5nAO84KQOcpjAa0rttDCDWlvg7XlewyA/gG', 'student', 'Huang Jie', 'huang.jie@seu.edu.cn',   '13800138008', 0);
 
-SHOW TABLES;
+/*SHOW TABLES;
 DESCRIBE rooms;
 DESCRIBE users;
 SELECT * FROM rooms;
 SELECT * FROM interventions;
-SELECT * from users;
+SELECT * from users;*/

@@ -1,10 +1,12 @@
+// Give the list of students that have a room
+// Used by the recetion and the admin
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
 import { pool } from "../db/pool.js";
 
 const router = Router();
 
-// Receptionist can list ONLY students who currently occupy a room
+// List only students who have an assigned room
 router.get("/", requireAuth, requireRole("receptionist", "admin"), async (_req, res, next) => {
   try {
     const [rows] = await pool.query(`

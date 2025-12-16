@@ -1,5 +1,6 @@
 <template>
   <div class="page">
+    <!-- Header with refresh and logout -->
     <div class="topbar">
       <h1 class="title">Administrator</h1>
 
@@ -12,12 +13,13 @@
     </div>
 
     <div class="grid grid--stack">
-      <!-- ROOMS SECTION -->
+      <!-- room section -->
       <section class="card">
         <div class="cardHeader">
           <h2>Rooms</h2>
         </div>
 
+        <!-- Shows room status, who occupies it and behavior score -->
         <table class="table">
           <thead>
             <tr>
@@ -52,13 +54,14 @@
         </table>
       </section>
 
-      <!-- REQUESTS SECTION -->
+      <!-- Room request section -->
       <section class="card">
         <div class="cardHeader">
           <h2>Room Requests</h2>
           <button class="btn" @click="loadRequests" :disabled="loading">Refresh</button>
         </div>
 
+        <!-- Shows all pending room requests -->
         <table class="table">
           <thead>
             <tr>
@@ -103,12 +106,15 @@ import api, { setAuthToken } from "../api";
 
 const router = useRouter();
 
+// Data shown in tables
 const rooms = ref([]);
 const requests = ref([]);
+
+// User interface state
 const loading = ref(false);
 const error = ref("");
 
-// ensure token is set when page refreshes
+// If the user refreshes the page, set token again so API calls work
 const token = localStorage.getItem("token");
 if (token) setAuthToken(token);
 
@@ -124,11 +130,13 @@ async function loadRooms() {
   rooms.value = data;
 }
 
+// Load pending requests
 async function loadRequests() {
   const { data } = await api.get("/api/admin/room-requests");
   requests.value = data;
 }
 
+// Load both tables together
 async function loadAll() {
   error.value = "";
   loading.value = true;
@@ -141,6 +149,7 @@ async function loadAll() {
   }
 }
 
+// Approve or reject a request, then reload data
 async function decide(userId, decision) {
   error.value = "";
   loading.value = true;
@@ -154,130 +163,6 @@ async function decide(userId, decision) {
   }
 }
 
+// Load data automatically when page opens
 onMounted(loadAll);
 </script>
-<!-- 
-<style scoped>
-.page {
-  min-height: 100vh;
-  padding: 24px;
-  background: #0b1220;
-  color: #eaf0ff;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.topbarActions {
-  display: flex;
-  gap: 10px;
-}
-
-.title {
-  font-size: 34px;
-  margin: 0;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-.card {
-  background: rgba(20, 30, 60, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 16px;
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 10px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  text-align: left;
-}
-
-.muted {
-  opacity: 0.65;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btnPrimary {
-  background: #2f6bff;
-  color: #fff;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.btnDanger {
-  background: #d64a4a;
-  color: #fff;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.pill {
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  display: inline-block;
-}
-
-.pillGreen {
-  background: rgba(0, 200, 120, 0.2);
-  border: 1px solid rgba(0, 200, 120, 0.35);
-}
-
-.pillRed {
-  background: rgba(255, 80, 80, 0.2);
-  border: 1px solid rgba(255, 80, 80, 0.35);
-}
-
-.score {
-  font-weight: 700;
-}
-
-.error {
-  margin-top: 12px;
-  color: #ff7b7b;
-}
-</style> -->

@@ -4,7 +4,7 @@
       <h1>Login</h1>
 
       <label>Username</label>
-      <input v-model="username" placeholder="student1" />
+      <input v-model="username" placeholder="studentX" />
 
       <label>Password</label>
       <input v-model="password" type="password" placeholder="pass1234" />
@@ -30,8 +30,8 @@ import api, { setAuthToken } from "../api";
 const router = useRouter();
 
 // Values from the form
-const username = ref("student1");
-const password = ref("pass1234");
+const username = ref("");
+const password = ref("");
 
 // User interface states
 const error = ref("");

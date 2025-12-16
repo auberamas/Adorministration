@@ -297,6 +297,14 @@ async function confirmRoomRequest() {
   try {
     await requestRoom(selectedRoom.value.id);
     closeRoomConfirm();
+
+    // Force disconnection
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setAuthToken(null);
+
+    // Redirect to login
+    await router.push("/login");
   } catch (e) {
     roomConfirmError.value = e?.response?.data?.error || e.message || "Request failed";
   } finally {
@@ -376,7 +384,7 @@ async function loadStudents() {
     // If current selection is missing or not in the list, select the first student
     const exists = students.value.some(s => String(s.id) === String(selectedStudentId.value));
     if (!exists) {
-      selectedStudentId.value = students.value.length ? String(students.value[0].id) : "";
+      selectedStudentId.value = "";
     }
   } catch (e) {
     behError.value = e?.response?.data?.error || e.message || "Failed to load students";

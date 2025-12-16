@@ -1,6 +1,7 @@
-/* ===== Global reset / layout safety ===== */
+/* **** BASE **** */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+
 body {
   margin: 0;
   background: #0b1220;
@@ -8,8 +9,9 @@ body {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-/* ===== Page containers ===== */
-/* Use .page for admin/dashboard pages */
+
+/* **** CONTAINERS ****  */
+/* dashboard/admin pages */
 .page {
   min-height: 100vh;
   padding: 24px;
@@ -17,7 +19,7 @@ body {
   margin: 0 auto;
 }
 
-/* Use .wrap only for login (centered) */
+/* login page */
 .wrap {
   min-height: 100vh;
   padding: 24px;
@@ -26,7 +28,8 @@ body {
   justify-content: center;
 }
 
-/* ===== Top bars ===== */
+
+/* **** HEADER / TOP BAR ****  */
 .topbar, .top {
   display: flex;
   align-items: center;
@@ -46,14 +49,15 @@ body {
   margin: 0;
 }
 
-/* ===== Grid/cards ===== */
+
+/* **** GRID / SECTIONS ****  */
 .grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
-/* Admin should be vertical (rooms then requests) */
+/* Admin layout: stack sections vertically */
 .grid--stack {
   grid-template-columns: 1fr;
 }
@@ -66,7 +70,7 @@ body {
   overflow: hidden;
 }
 
-/* Login card must be limited width */
+/* Login card width constraint */
 .card--auth {
   width: 100%;
   max-width: 520px;
@@ -82,16 +86,24 @@ body {
   margin-bottom: 10px;
 }
 
-/* ===== Buttons (admin style) ===== */
-.btn {
+
+/* **** BUTTONS****  */
+.btn,
+button {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 8px 10px;
+  margin:10px auto;
   border-radius: 10px;
   cursor: pointer;
 }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btnPrimary {
   background: #2f6bff;
@@ -111,18 +123,8 @@ body {
   cursor: pointer;
 }
 
-/* Make plain <button> look like .btn by default */
-button {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ===== Forms ===== */
+/* **** FORMS (inputs/select/textarea/labels) ****  */
 label {
   display: block;
   margin-top: 12px;
@@ -139,12 +141,28 @@ input, select, textarea {
   color: #e7eefc;
 }
 
-textarea { min-height: 90px; resize: vertical; }
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
 
-.row { display: flex; gap: 10px; align-items: stretch; }
+/* Used to have 2 inputs on same line */
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
 .row > * { flex: 1; }
 
-/* ===== Pills / messages ===== */
+
+/* **** TEXT HELPERS / STATUS ****  */
+.muted { opacity: 0.75; }
+
+.error, .err {
+  margin-top: 12px;
+  color: #ff7b7b;
+}
+
 .pill {
   padding: 6px 10px;
   border-radius: 999px;
@@ -153,44 +171,53 @@ textarea { min-height: 90px; resize: vertical; }
   background: rgba(255,255,255,0.06);
 }
 
-.muted { opacity: 0.75; }
-
-.error, .err {
-  margin-top: 12px;
-  color: #ff7b7b;
+/* status tags (admin room status) */
+.pillGreen {
+  background: rgba(0, 200, 120, 0.2);
+  border: 1px solid rgba(0, 200, 120, 0.35);
 }
 
-/* ===== Lists ===== */
+.pillRed {
+  background: rgba(255, 80, 80, 0.2);
+  border: 1px solid rgba(255, 80, 80, 0.35);
+}
+
+.score { font-weight: 700; }
+
+
+/* **** LISTS (rooms list, interventions list...)****  */
 ul { padding-left: 18px; margin: 10px 0 0; }
 li { margin: 8px 0; }
 
-.clickRow { cursor:pointer; padding: 6px 6px; border-radius: 10px; }
+/* Clickable list row (ex: choose room) */
+.clickRow {
+  cursor: pointer;
+  padding: 6px 6px;
+  border-radius: 10px;
+}
 .clickRow:hover { background: rgba(255,255,255,0.06); }
 
-/* ===== Tables (admin) ===== */
+
+/* **** TABLES (admin)****  */
 .table {
   width: 100%;
   border-collapse: collapse;
 }
+
 th, td {
   padding: 10px 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   text-align: left;
 }
 
-/* ===== Optional: status pills ===== */
-.pillGreen {
-  background: rgba(0, 200, 120, 0.2);
-  border: 1px solid rgba(0, 200, 120, 0.35);
-}
-.pillRed {
-  background: rgba(255, 80, 80, 0.2);
-  border: 1px solid rgba(255, 80, 80, 0.35);
-}
-.score { font-weight: 700; }
 
-/* ===== Profile key/value rows ===== */
-.profile { margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+/* **** PROFILE OF THE USER INTERFACE (key/value rows)****  */
+.profile {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .kv {
   display: flex;
@@ -206,11 +233,21 @@ th, td {
 .k { opacity: 0.75; }
 .v { font-weight: 600; }
 
-/* optional */
-.actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-.box { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
 
 
+/* **** CONFIRM WINDOW (confirm room request)****  */
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -231,9 +268,7 @@ th, td {
   padding: 16px;
 }
 
-.modalTitle {
-  margin: 0 0 6px;
-}
+.modalTitle { margin: 0 0 6px; }
 
 .modalActions {
   display: flex;

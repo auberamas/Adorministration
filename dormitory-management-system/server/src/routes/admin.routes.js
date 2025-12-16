@@ -26,7 +26,7 @@ router.get("/rooms-overview", requireAuth, requireRole("admin"), async (_req, re
         u.id AS student_id,
         u.username AS student_username,
         u.name AS student_name,
-        (20 - COALESCE(SUM(br.points), 0)) AS behavior_score
+        GREATEST(0, LEAST(20, 20 + COALESCE(SUM(br.points), 0))) AS behavior_score
       FROM rooms r
       LEFT JOIN users u ON u.room_id = r.id
       LEFT JOIN behavior_records br ON br.student_id = u.id

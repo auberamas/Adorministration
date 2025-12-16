@@ -31,13 +31,7 @@ router.post("/", requireAuth, requireRole("student", "receptionist"), async (req
 
       finalRoomId = u.room_id;
     } 
-    // else {
-    //   // Receptionist must provide roomId
-    //   const n = Number(roomId);
-    //   if (!n) return res.status(400).json({ error: "roomId required" });
-    //   finalRoomId = n;
-    // }
-
+  
     // Insert the intervention as pending
     await pool.query(
       "INSERT INTO interventions (created_by, room_id, type, description, status) VALUES (:uid,:rid,:type,:desc,'pending')",

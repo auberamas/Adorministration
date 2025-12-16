@@ -48,7 +48,7 @@ router.patch("/", requireAuth, async (req, res, next) => {
     let phoneDigits = null;
     if (phone !== undefined && phone !== null && String(phone).trim() !== "") {
       phoneDigits = String(phone).replace(/\D/g, "");
-      if (phoneDigits.length !== 11) {
+      if (phoneDigits.length != 11) {
         return res.status(400).json({ error: "Phone must contain exactly 11 digits" });
       }
     }

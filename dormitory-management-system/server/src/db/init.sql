@@ -35,7 +35,7 @@ CREATE TABLE users (
 CREATE TABLE interventions (
   id INT PRIMARY KEY AUTO_INCREMENT,
   created_by INT NOT NULL,
-  room_id INT NOT NULL,
+  room_id INT NULL,
   type ENUM('cleaning','repair') NOT NULL,
   description VARCHAR(500) NOT NULL,
   status ENUM('pending','accepted','rejected','completed') NOT NULL DEFAULT 'pending',

@@ -5,9 +5,6 @@
       <h1 class="title">Administrator</h1>
 
       <div class="topbarActions">
-        <button class="btn" @click="loadAll" :disabled="loading">
-          {{ loading ? "..." : "Refresh" }}
-        </button>
         <button class="btn" @click="logout">Logout</button>
       </div>
     </div>
@@ -58,7 +55,6 @@
       <section class="card">
         <div class="cardHeader">
           <h2>Room Requests</h2>
-          <button class="btn" @click="loadRequests" :disabled="loading">Refresh</button>
         </div>
 
         <!-- Shows all pending room requests -->

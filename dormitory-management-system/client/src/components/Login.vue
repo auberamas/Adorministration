@@ -9,7 +9,7 @@
       <label>Password</label>
       <input v-model="password" type="password" placeholder="pass1234" />
 
-      <button @click="onLogin" :disabled="loading">{{ loading ? "..." : "Login" }}</button>
+      <button class="login-btn" @click="onLogin" :disabled="loading">{{ loading ? "..." : "Login" }}</button>
 
       <p v-if="error" class="err">{{ error }}</p>
     </div>

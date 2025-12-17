@@ -11,6 +11,12 @@
       </div>
     </div>
 
+    <!-- To notify expultion -->
+    <div class="card expulsion-notif" v-if="user?.role==='student' && me?.expelled">
+      <p class="error">
+        Your behavior score reached 0. You are subject to expulsion. Please contact the administration immediately.
+      </p>
+    </div>
     <div class="grid">
        <!-- for student role : if admin approved a room student have to pay-->
       <div class="card" v-if="user?.role==='student' && me?.room_id && !me?.paid">
@@ -32,13 +38,13 @@
 
         <!-- Show user data -->
         <div v-if="me" class="profile">
-          <div class="kv"><span class="k">Name</span><span class="v">{{ me.name }}</span></div>
-          <div class="kv"><span class="k">Username</span><span class="v">{{ me.username }}</span></div>
-          <div class="kv"><span class="k">Role</span><span class="v">{{ me.role }}</span></div>
+          <div class="profile-field"><span class="profile-key">Name</span><span class="profile-value">{{ me.name }}</span></div>
+          <div class="profile-field"><span class="profile-key">Username</span><span class="profile-value">{{ me.username }}</span></div>
+          <div class="profile-field"><span class="profile-key">Role</span><span class="profile-value">{{ me.role }}</span></div>
 
-          <div class="kv">
-            <span class="k">Room</span>
-            <span class="v">
+          <div class="profile-field">
+            <span class="profile-key">Room</span>
+            <span class="profile-value">
               <template v-if="me.room_number">
                 {{ me.building ? me.building + " - " : "" }}{{ me.room_number }}
               </template>
@@ -46,17 +52,21 @@
             </span>
           </div>
 
-          <div class="kv"><span class="k">Paid</span><span class="v">{{ me.paid ? "Yes" : "No" }}</span></div>
+          <div class="profile-field"><span class="profile-key">Paid</span><span class="profile-value">{{ me.paid ? "Yes" : "No" }}</span></div>
+          <div class="profile-field">
+            <span class="profile-key">Behavior score</span>
+            <span class="profile-value">{{ me?.behavior_score ?? "—" }}</span>
+        </div>
 
-          <div class="kv">
-            <span class="k">Email</span>
-            <span class="v" v-if="!editProfile">{{ me.email ?? "—" }}</span>
+          <div class="profile-field">
+            <span class="profile-key">Email</span>
+            <span class="profile-value" v-if="!editProfile">{{ me.email ?? "—" }}</span>
             <input v-else v-model="editEmail" placeholder="email" />
           </div>
 
-          <div class="kv">
-            <span class="k">Phone</span>
-            <span class="v" v-if="!editProfile">{{ me.phone ?? "—" }}</span>
+          <div class="profile-field">
+            <span class="profile-key">Phone</span>
+            <span class="profile-value" v-if="!editProfile">{{ me.phone ?? "—" }}</span>
             <input
               v-else
               v-model="editPhone"
@@ -203,6 +213,7 @@
         />
         <input v-model="behDesc" placeholder="description" />
 
+        <button class="btnPrimary record-behavior-btn" @click="recordBehavior" :disabled="loadingBehavior">
         <button class="btnBlue service-btn" @click="recordBehavior" :disabled="loadingBehavior">
           {{ loadingBehavior ? "..." : "Record" }}
         </button>
@@ -218,289 +229,279 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+<script>
 import api, { setAuthToken } from "../api";
 
-const router = useRouter();
+export default {
+  name: "Dashboard",
 
-// user's basics info are saved in localStorage after login
-const user = ref(null);
+  data() {
+    return {
+      // user's basics info are saved in localStorage after login
+      user: null,
 
-// full user profile returned by backend (/api/me)
-const me = ref(null);
+      // full user profile returned by backend (/api/me)
+      me: null,
 
-// // lists used in user's interface
-const availableRooms = ref([]);
-const interventions = ref([]);
+      // // lists used in user's interface
+      availableRooms: [],
+      interventions: [],
 
-// Error message
-const error = ref("");
+      // Error message
+      error: "",
 
-const newType = ref("cleaning");
-const newDesc = ref("");
-const expanded = ref(null)
+      newType: "cleaning",
+      newDesc: "",
 
-// student room request confirmation
-const showRoomConfirm = ref(false);
-const selectedRoom = ref(null);
-const confirmingRoom = ref(false);
-const roomConfirmError = ref("");
+      // student room request confirmation
+      showRoomConfirm: false,
+      selectedRoom: null,
+      confirmingRoom: false,
+      roomConfirmError: "",
 
-const editProfile = ref(false);
-const editEmail = ref("");
-const editPhone = ref("");
-const savingProfile = ref(false);
-const profileError = ref("");
+      editProfile: false,
+      editEmail: "",
+      editPhone: "",
+      savingProfile: false,
+      profileError: "",
 
-const loadingPay = ref(false);
-const payError = ref("");
+      loadingPay: false,
+      payError: "",
 
-// receptionist students dropdown
-const students = ref([]);
-const selectedStudentId = ref(""); // IMPORTANT: keep string
-const loadingStudents = ref(false);
+      // receptionist students dropdown
+      students: [],
+      selectedStudentId: "", // IMPORTANT: keep string
+      loadingStudents: false,
 
-// behavior inputs
-const behDeduct = ref(1);
-const behDesc = ref("");
-const behError = ref("");
-const loadingBehavior = ref(false);
+      // behavior inputs
+      behDeduct: 1,
+      behDesc: "",
+      behError: "",
+      loadingBehavior: false,
+    };
+  },
 
-// Logout
-function logout() {
-  // Remove saved login data
-  localStorage.removeItem("token");
+  methods: {
+    // Logout
+    logout() {
+      // Remove saved login data
+      localStorage.removeItem("token");
 
-  localStorage.removeItem("user");
-  // Remove token from API requests
-  setAuthToken(null);
+      localStorage.removeItem("user");
+      // Remove token from API requests
+      setAuthToken(null);
 
-  // Go back to login page
-  router.push("/login");
-}
+      // Go back to login page
+      this.$router.push("/login");
+    },
 
-// Load current user profile
-async function loadMe() {
-  const { data } = await api.get("/api/me");
-  me.value = data;
-}
+    // Load current user profile
+    async loadMe() {
+      const { data } = await api.get("/api/me");
+      this.me = data;
+    },
 
-// Load available rooms 
-async function loadAvailableRooms() {
-  const { data } = await api.get("/api/rooms/available");
-  availableRooms.value = data;
-}
+    // Load available rooms 
+    async loadAvailableRooms() {
+      const { data } = await api.get("/api/rooms/available");
+      this.availableRooms = data;
+    },
 
-async function requestRoom(roomId) {
-  await api.post("/api/rooms/request", { roomId });
-  await loadMe();
-}
+    async requestRoom(roomId) {
+      await api.post("/api/rooms/request", { roomId });
+      await this.loadMe();
+    },
 
-function openRoomConfirm(room) {
-  roomConfirmError.value = "";
-  selectedRoom.value = room;
-  showRoomConfirm.value = true;
-}
+    openRoomConfirm(room) {
+      this.roomConfirmError = "";
+      this.selectedRoom = room;
+      this.showRoomConfirm = true;
+    },
 
-function closeRoomConfirm() {
-  showRoomConfirm.value = false;
-  selectedRoom.value = null;
-  confirmingRoom.value = false;
-  roomConfirmError.value = "";
-}
+    closeRoomConfirm() {
+      this.showRoomConfirm = false;
+      this.selectedRoom = null;
+      this.confirmingRoom = false;
+      this.roomConfirmError = "";
+    },
 
-// Confirm button inside the modal
-async function confirmRoomRequest() {
-  if (!selectedRoom.value?.id) return;
-  confirmingRoom.value = true;
-  roomConfirmError.value = "";
-  try {
-    await requestRoom(selectedRoom.value.id);
-    closeRoomConfirm();
+    // Confirm button inside the modal
+    async confirmRoomRequest() {
+      if (!this.selectedRoom?.id) return;
+      this.confirmingRoom = true;
+      this.roomConfirmError = "";
+      try {
+        await this.requestRoom(this.selectedRoom.id);
+        this.closeRoomConfirm();
 
-    // Force disconnection
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setAuthToken(null);
+        // Force disconnection
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setAuthToken(null);
 
-    // Redirect to login
-    await router.push("/login");
-  } catch (e) {
-    roomConfirmError.value = e?.response?.data?.error || e.message || "Request failed";
-  } finally {
-    confirmingRoom.value = false;
-  }
-}
+        // Redirect to login
+        await this.$router.push("/login");
+      } catch (e) {
+        this.roomConfirmError = e?.response?.data?.error || e.message || "Request failed";
+      } finally {
+        this.confirmingRoom = false;
+      }
+    },
 
-async function loadInterventions() {
-  const { data } = await api.get("/api/interventions");
-  interventions.value = data;
+    async loadInterventions() {
+      const { data } = await api.get("/api/interventions");
+      let list = data;
 
-  // sort newest → oldest
-  let sorted = [...data].sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  )
+      if (this.user?.role === "service") {
+        list = list.filter(i => ["pending", "accepted"].includes(i.status));
+      }
 
-  // SERVICE: see only pending and accepted
-  if (user.value?.role === "service"){
-    { interventions.value = interventions.value.filter(i => ["pending", "accepted"].includes(i.status));}
-    return
-  }
+      this.interventions = list;
+    },
 
-  // STUDENT / RECEPTION: see only last 7
-  interventions.value = sorted.slice(0, 7)
-}
+    async createIntervention() {
+      const payload = { type: this.newType, description: this.newDesc };
 
+      await api.post("/api/interventions", payload);
+      this.newDesc = "";
+      await this.loadInterventions();
+    },
 
+    async setStatus(id, status) {
+      await api.post(`/api/interventions/${id}/status`, { status });
+      await this.loadInterventions();
+    },
 
-async function createIntervention() {
-  const payload = { type: newType.value, description: newDesc.value };
+    startEdit() {
+      this.profileError = "";
+      this.editProfile = true;
+      this.editEmail = this.me?.email ?? "";
+      this.editPhone = this.me?.phone ?? "";
+    },
 
-  await api.post("/api/interventions", payload);
-  newDesc.value = "";
-  await loadInterventions();
-}
+    cancelEdit() {
+      this.editProfile = false;
+      this.profileError = "";
+    },
 
-async function setStatus(id, status) {
-  await api.post(`/api/interventions/${id}/status`, { status });
-  await loadInterventions();
-}
+    async saveProfile() {
+      this.savingProfile = true;
+      this.profileError = "";
+      try {
+        const { data } = await api.patch("/api/me", { email: this.editEmail, phone: this.editPhone });
+        this.me = data;
+        this.editProfile = false;
+      } catch (e) {
+        this.profileError = e?.response?.data?.error || e.message || "Update failed";
+      } finally {
+        this.savingProfile = false;
+      }
+    },
 
-function toggle(id) {
-  expanded.value = expanded.value === id ? null : id
-}
+    async payRoom() {
+      this.loadingPay = true;
+      this.payError = "";
+      try {
+        await api.post("/api/me/pay");
+        await this.loadMe();
+      } catch (e) {
+        this.payError = e?.response?.data?.error || e.message || "Payment failed";
+      } finally {
+        this.loadingPay = false;
+      }
+    },
 
+    // Receptionist load students list for behavior dropdown
+    async loadStudents() {
+      this.loadingStudents = true;
+      this.behError = "";
+      try {
+        const { data } = await api.get("/api/students");
+        this.students = data;
 
+        // If current selection is missing or not in the list, select the first student
+        const exists = this.students.some(s => String(s.id) === String(this.selectedStudentId));
+        if (!exists) {
+          this.selectedStudentId = "";
+        }
+      } catch (e) {
+        this.behError = e?.response?.data?.error || e.message || "Failed to load students";
+      } finally {
+        this.loadingStudents = false;
+      }
+    },
 
-function startEdit() {
-  profileError.value = "";
-  editProfile.value = true;
-  editEmail.value = me.value?.email ?? "";
-  editPhone.value = me.value?.phone ?? "";
-}
+    // Receptionist record behavior (deduct points)
+    async recordBehavior() {
+      this.behError = "";
 
-function cancelEdit() {
-  editProfile.value = false;
-  profileError.value = "";
-}
+      if (!this.selectedStudentId) {
+        this.behError = "Please select a student";
+        return;
+      }
+      if (!this.behDesc.trim()) {
+        this.behError = "Please enter a description";
+        return;
+      }
+      if (!Number.isFinite(Number(this.behDeduct)) || Number(this.behDeduct) <= 0) {
+        this.behError = "Points must be a positive number";
+        return;
+      }
 
-async function saveProfile() {
-  savingProfile.value = true;
-  profileError.value = "";
-  try {
-    const { data } = await api.patch("/api/me", { email: editEmail.value, phone: editPhone.value });
-    me.value = data;
-    editProfile.value = false;
-  } catch (e) {
-    profileError.value = e?.response?.data?.error || e.message || "Update failed";
-  } finally {
-    savingProfile.value = false;
-  }
-}
+      this.loadingBehavior = true;
+      try {
+        await api.post("/api/behavior", {
+          studentId: Number(this.selectedStudentId),
+          description: this.behDesc.trim(),
+          points: Number(this.behDeduct)
+        });
 
-async function payRoom() {
-  loadingPay.value = true;
-  payError.value = "";
-  try {
-    await api.post("/api/me/pay");
-    await loadMe();
-  } catch (e) {
-    payError.value = e?.response?.data?.error || e.message || "Payment failed";
-  } finally {
-    loadingPay.value = false;
-  }
-}
+        // keep the selected student (do NOT reset selectedStudentId)
+        this.behDesc = "";
+        this.behDeduct = 1;
+      } catch (e) {
+        this.behError = e?.response?.data?.error || e.message || "Record failed";
+      } finally {
+        this.loadingBehavior = false;
+      }
+    },
 
-// Receptionist load students list for behavior dropdown
-async function loadStudents() {
-  loadingStudents.value = true;
-  behError.value = "";
-  try {
-    const { data } = await api.get("/api/students");
-    students.value = data;
+    // Main function when dashboard loads
+    async init() {
 
-    // If current selection is missing or not in the list, select the first student
-    const exists = students.value.some(s => String(s.id) === String(selectedStudentId.value));
-    if (!exists) {
-      selectedStudentId.value = "";
-    }
-  } catch (e) {
-    behError.value = e?.response?.data?.error || e.message || "Failed to load students";
-  } finally {
-    loadingStudents.value = false;
-  }
-}
+      // Check if token exists (if not, go login)
+      const token = localStorage.getItem("token");
+      if (!token) return this.$router.push("/login");
 
-// Receptionist record behavior (deduct points)
-async function recordBehavior() {
-  behError.value = "";
+      // Attach token to API requests
+      setAuthToken(token);
 
-  if (!selectedStudentId.value) {
-    behError.value = "Please select a student";
-    return;
-  }
-  if (!behDesc.value.trim()) {
-    behError.value = "Please enter a description";
-    return;
-  }
-  if (!Number.isFinite(Number(behDeduct.value)) || Number(behDeduct.value) <= 0) {
-    behError.value = "Points must be a positive number";
-    return;
-  }
+      // Read basic user info from localStorage
+      this.user = JSON.parse(localStorage.getItem("user") || "null");
+      if (this.user?.role === "admin") return this.$router.push("/admin");
 
-  loadingBehavior.value = true;
-  try {
-    await api.post("/api/behavior", {
-      studentId: Number(selectedStudentId.value),
-      description: behDesc.value.trim(),
-      points: Number(behDeduct.value)
-    });
+      try {
+        // Load data needed for the dashboard
+        await this.loadMe();
 
-    // keep the selected student (do NOT reset selectedStudentId)
-    behDesc.value = "";
-    behDeduct.value = 1;
-  } catch (e) {
-    behError.value = e?.response?.data?.error || e.message || "Record failed";
-  } finally {
-    loadingBehavior.value = false;
-  }
-}
+        // If admin, redirect to admin page
+        if (this.user?.role === "student") {
+          if (!this.me?.room_id && !this.me?.requested_room_id) await this.loadAvailableRooms();
+        }
 
-// Main function when dashboard loads
-async function init() {
+        if (this.user?.role === "receptionist") {
+          await this.loadStudents();
+        }
 
-  // Check if token exists (if not, go login)
-  const token = localStorage.getItem("token");
-  if (!token) return router.push("/login");
+        await this.loadInterventions();
+      } catch (e) {
+        this.error = e?.response?.data?.error || e.message;
+      }
+    },
+  },
 
-  // Attach token to API requests
-  setAuthToken(token);
-
-  // Read basic user info from localStorage
-  user.value = JSON.parse(localStorage.getItem("user") || "null");
-  if (user.value?.role === "admin") return router.push("/admin");
-
-  try {
-    // Load data needed for the dashboard
-    await loadMe();
-
-    // If admin, redirect to admin page
-    if (user.value?.role === "student") {
-      if (!me.value?.room_id && !me.value?.requested_room_id) await loadAvailableRooms();
-    }
-
-    if (user.value?.role === "receptionist") {
-      await loadStudents();
-    }
-
-    await loadInterventions();
-  } catch (e) {
-    error.value = e?.response?.data?.error || e.message;
-  }
-}
-
-// Run init() automatically when the page opens
-onMounted(init);
+  mounted() {
+    this.init();
+  },
+};
 </script>

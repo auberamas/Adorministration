@@ -91,74 +91,131 @@
 
         <p v-if="error" class="error">{{ error }}</p>
       </section>
+
+      <section class="card">
+        <div class="cardHeader">
+          <h2>Behavior Requests</h2>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Points to remove</th>
+              <th>Reason</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in behaviorRequests" :key="b.id">
+              <td>{{ b.student_name }} ({{ b.student_username }})</td>
+              <td>{{ b.points }}</td>
+              <td>{{ b.description }}</td>
+              <td class="actions">
+                <button class="btnPrimary" @click="updateBehaviorRecord(b.id,'approve')" :disabled="loading">
+                  Accept
+                </button>
+                <button class="btnDanger" @click="updateBehaviorRecord(b.id,'reject')" :disabled="loading">
+                  Refuse
+                </button>
+              </td>
+            </tr>
+
+            <tr v-if="!behaviorRequests.length">
+              <td colspan="4" class="muted">No behavior requests.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+<script>
 import api, { setAuthToken } from "../api";
 
-const router = useRouter();
+export default {
+  name: "AdminDashboard",
 
-// Data shown in tables
-const rooms = ref([]);
-const requests = ref([]);
+  data() {
+    return {
+      // Data shown in tables
+      rooms: [],
+      requests: [],
+      behaviorRequests: [],
 
-// User interface state
-const loading = ref(false);
-const error = ref("");
+      // User interface state
+      loading: false,
+      error: "",
+    };
+  },
 
-// If the user refreshes the page, set token again so API calls work
-const token = localStorage.getItem("token");
-if (token) setAuthToken(token);
+  methods: {
+    logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setAuthToken(null);
+      this.$router.push("/");
+    },
 
-function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  setAuthToken(null);
-  router.push("/");
-}
+    async loadBehaviorRequests() {
+      const { data } = await api.get("/api/admin/behavior-requests");
+      this.behaviorRequests = data;
+    },
 
-async function loadRooms() {
-  const { data } = await api.get("/api/admin/rooms-overview");
-  rooms.value = data;
-}
+    async updateBehaviorRecord(id, decision) {
+      await api.post(`/api/admin/behavior-requests/${id}/decide`, { decision });
+      await this.loadBehaviorRequests();
+      await this.loadRooms(); // behavior score updates immediately in rooms overview
+    },
 
-// Load pending requests
-async function loadRequests() {
-  const { data } = await api.get("/api/admin/room-requests");
-  requests.value = data;
-}
+    async loadRooms() {
+      const { data } = await api.get("/api/admin/rooms-overview");
+      this.rooms = data;
+    },
 
-// Load both tables together
-async function loadAll() {
-  error.value = "";
-  loading.value = true;
-  try {
-    await Promise.all([loadRooms(), loadRequests()]);
-  } catch (e) {
-    error.value = e?.response?.data?.error || e.message || "Failed to load";
-  } finally {
-    loading.value = false;
-  }
-}
+    // Load pending requests
+    async loadRequests() {
+      const { data } = await api.get("/api/admin/room-requests");
+      this.requests = data;
+    },
 
-// Approve or reject a request, then reload data
-async function decide(userId, decision) {
-  error.value = "";
-  loading.value = true;
-  try {
-    await api.post(`/api/admin/room-requests/${userId}/decide`, { decision });
-    await loadAll();
-  } catch (e) {
-    error.value = e?.response?.data?.error || e.message || "Action failed";
-  } finally {
-    loading.value = false;
-  }
-}
+    // Load both tables together
+    async loadAll() {
+      this.error = "";
+      this.loading = true;
+      try {
+        await Promise.all([this.loadRooms(), this.loadRequests(), this.loadBehaviorRequests()]);
+      } catch (e) {
+        this.error = e?.response?.data?.error || e.message || "Failed to load";
+      } finally {
+        this.loading = false;
+      }
+    },
 
-// Load data automatically when page opens
-onMounted(loadAll);
+    // Approve or reject a request, then reload data
+    async decide(userId, decision) {
+      this.error = "";
+      this.loading = true;
+      try {
+        await api.post(`/api/admin/room-requests/${userId}/decide`, { decision });
+        await this.loadAll();
+      } catch (e) {
+        this.error = e?.response?.data?.error || e.message || "Action failed";
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+
+  mounted() {
+    // If the user refreshes the page, set token again so API calls work
+    const token = localStorage.getItem("token");
+    if (token) setAuthToken(token);
+
+    // Load data automatically when page opens
+    this.loadAll();
+  },
+};
 </script>

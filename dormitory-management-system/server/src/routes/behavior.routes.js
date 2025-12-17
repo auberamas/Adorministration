@@ -12,25 +12,21 @@ router.post("/", requireAuth, requireRole("receptionist"), async (req, res, next
     const sid = Number(studentId);
     const p = Number(points);
 
-    // Validate input
     if (!sid || !description || Number.isNaN(p)) {
       return res.status(400).json({ error: "studentId, description, points required" });
     }
     if (p <= 0) {
-      return res.status(400).json({ error: "points must be > 0 (points to remove)" });
+      return res.status(400).json({ error: "points must be > 0" });
     }
 
-    const deduction = -Math.abs(p); // always negative
-
     await pool.query(
-      "INSERT INTO behavior_records (student_id, recorded_by, description, points) VALUES (:sid,:rid,:desc,:pts)",
-      { sid, rid: req.user.sub, desc: description, pts: deduction }
+      `INSERT INTO behavior_requests (student_id, requested_by, description, points, status)
+       VALUES (:sid, :rid, :desc, :pts, 'pending')`,
+      { sid, rid: req.user.sub, desc: description.trim(), pts: Math.abs(p) }
     );
 
     res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 });
 
 // Admin report: score is between 0 and 20

@@ -8,7 +8,6 @@ CREATE TABLE dormitory (
   num_available_rooms INT NOT NULL
 );
 
--- capacity removed here
 CREATE TABLE rooms (
   id INT PRIMARY KEY AUTO_INCREMENT,
   building VARCHAR(50) NULL,
@@ -27,6 +26,7 @@ CREATE TABLE users (
   room_id INT NULL,
   requested_room_id INT NULL,
   paid TINYINT(1) NOT NULL DEFAULT 0,
+  expelled TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_users_room FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL,
   CONSTRAINT fk_users_requested_room FOREIGN KEY (requested_room_id) REFERENCES rooms(id) ON DELETE SET NULL
@@ -52,21 +52,25 @@ CREATE TABLE behavior_records (
   student_id INT NOT NULL,
   recorded_by INT NOT NULL,
   description VARCHAR(500) NOT NULL,
-  points INT NOT NULL,
+  points INT NOT NULL, -- store NEGATIVE values 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_beh_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_beh_recorder FOREIGN KEY (recorded_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE notifications (
+
+CREATE TABLE behavior_requests (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  user_id INT NOT NULL,
-  title VARCHAR(120) NOT NULL,
-  message VARCHAR(500) NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  read_at DATETIME NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  student_id INT NOT NULL,
+  requested_by INT NOT NULL,
+  description VARCHAR(500) NOT NULL,
+  points INT NOT NULL,
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_behavior_requests_status ON behavior_requests(status);
 
 CREATE INDEX idx_users_room ON users(room_id);
 CREATE INDEX idx_users_requested_room ON users(requested_room_id);

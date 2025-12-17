@@ -469,7 +469,6 @@ export default {
   },
 
   mounted() {
-    // Run init() automatically when the page opens
     this.init();
   },
 };

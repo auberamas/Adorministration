@@ -3,19 +3,19 @@
 Vue (Vite) + Node/Express + MySQL.
 
 ## Description
-The application is a stystem to manage a dormitory involving 4 types of actors:
-### Student
+The application is a system to manage a dormitory involving 4 type of actors:
+### The student
 - Can view profile
 - Can request one room
 - Must wait for admin approval
 - Must confirm payment after approval
 - Can request interventions
 
-### Receptionist
+### The receptionist
 - Can request interventions
 - Can record behavior penalties
 
-### Service
+### The service
 Can accept / reject / complete interventions
 
 ### Administrator
@@ -24,13 +24,13 @@ Can accept / reject / complete interventions
 
 ## Install
 ### Backend
-1. Open the terminal in vs code and enter the following:
+Open the terminal in vs code and enter the following:
 ```
 cd dormitory-management-system\server
 npm install
 copy .env.example .env
 ```
-Goes to the .env (not .env.example) and the inidt-db.js files and set : DB_PASSWORD
+Goes to the .env (not .env.example) and the init-db.js files and set : DB_PASSWORD
 
 Initialize the database and lauch the server:
 ```
@@ -40,6 +40,7 @@ npm run dev
 Backend should print: `API listening on http://localhost:4000`
 
 ### Frontend
+Open a new terminal znd enter the following:
 ```
 cd dormitory-management-system\client
 npm install
@@ -62,5 +63,3 @@ Frontend runs on : `http://localhost:5173`
 ## Health checks
 - http://localhost:4000/health
 - http://localhost:4000/
-
-##

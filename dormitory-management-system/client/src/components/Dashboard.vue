@@ -24,7 +24,7 @@
         <p class="muted">
           Your room has been approved by the administrator. Please pay to confirm your accommodation.
         </p>
-        <button class="btnPrimary" @click="payRoom" :disabled="loadingPay">
+        <button class="btnBlue" @click="payRoom" :disabled="loadingPay">
           {{ loadingPay ? "..." : "Pay" }}
         </button>
         <p v-if="payError" class="error">{{ payError }}</p>
@@ -80,10 +80,10 @@
           <!-- Student can edit email/phone -->
           <div class="actions" v-if="user?.role==='student'">
             <button class="btn" v-if="!editProfile" @click="startEdit">Modify</button>
-            <button class="btnPrimary" v-else @click="saveProfile" :disabled="savingProfile">
+            <button class="btnBlue" v-else @click="saveProfile" :disabled="savingProfile">
               {{ savingProfile ? "..." : "Save" }}
             </button>
-            <button class="btnDanger" v-if="editProfile" @click="cancelEdit">Cancel</button>
+            <button class="btnRed" v-if="editProfile" @click="cancelEdit">Cancel</button>
           </div>
 
           <p v-if="profileError" class="error">{{ profileError }}</p>
@@ -122,7 +122,7 @@
 
           <div class="modalActions">
             <button class="btn" @click="closeRoomConfirm">Cancel</button>
-            <button class="btnPrimary" @click="confirmRoomRequest" :disabled="confirmingRoom">
+            <button class="btnBlue" @click="confirmRoomRequest" :disabled="confirmingRoom">
               {{ confirmingRoom ? "..." : "Confirm" }}
             </button>
           </div>
@@ -138,7 +138,7 @@
       </div>
 
       <!-- Interventions visible for everyone except admin -->
-      <div class="card" v-if="user?.role !== 'admin'">
+      <div class="card intervention-block" v-if="user?.role !== 'admin'">
         <div class="cardHeader">
           <h2>Interventions</h2>
         </div>
@@ -158,18 +158,39 @@
           </div>
 
           <textarea v-model="newDesc" placeholder="description"></textarea>
-          <button class="btnPrimary" @click="createIntervention">Create</button>
+          <button class="btnBlue" @click="createIntervention">Create</button>
         </div>
 
         <ul class="list">
           <li v-for="it in interventions" :key="it.id">
-            #{{ it.id }} (room {{ it.room_id }}) {{ it.type }} - {{ it.status }}
+            <div>
+              <span>
+                #{{ it.id }} ({{ it.room_id ? `room ${it.room_id}` : 'reception' }}) {{ it.type }} - {{ it.status }}
+              </span>
 
-            <template v-if="user?.role==='service'">
-              <button class="btnPrimary" v-if="it.status==='pending'" @click="setStatus(it.id,'accepted')">Accept</button>
-              <button class="btnDanger" v-if="it.status==='pending'" @click="setStatus(it.id,'rejected')">Reject</button>
-              <button class="btnPrimary" v-if="it.status==='accepted'" @click="setStatus(it.id,'completed')">Complete</button>
-            </template>
+                <template v-if="user?.role === 'service'">
+
+                  <!-- DESCRIPTION TOGGLE -->
+                  <button class="toggle service-btn" @click="toggle(it.id)"> {{ expanded === it.id ? '▲' : '▼' }} </button>
+
+                  <!-- PENDING -->
+                  <button class="btnBlue service-btn" v-if="it.status === 'pending'" @click="setStatus(it.id, 'accepted')"> Accept </button>
+                  <button class="btnRed service-btn" v-if="it.status === 'pending'" @click="setStatus(it.id, 'rejected')" > Reject </button>
+              
+                  <!-- ACCEPTED -->
+                  <button class="btnBlue service-btn" v-if="it.status === 'accepted'" @click="setStatus(it.id, 'completed')"> Complete </button>
+
+                </template>
+            </div>
+
+            <!-- DESCRIPTION -->
+            <transition name="slide">
+              <div v-if="expanded === it.id" class="description">
+                <strong>Description:</strong>
+                <p>{{ it.description }}</p>
+              </div>
+            </transition>
+
           </li>
         </ul>
       </div>
@@ -193,6 +214,7 @@
         <input v-model="behDesc" placeholder="description" />
 
         <button class="btnPrimary record-behavior-btn" @click="recordBehavior" :disabled="loadingBehavior">
+        <button class="btnBlue service-btn" @click="recordBehavior" :disabled="loadingBehavior">
           {{ loadingBehavior ? "..." : "Record" }}
         </button>
 

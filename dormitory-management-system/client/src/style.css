@@ -1,15 +1,44 @@
-/* ===== Global reset / layout safety ===== */
+/* SEU THEME VARIABLES */
+:root {
+  --seu-green: rgb(61, 142, 0);
+  --seu-yellow: rgb(255, 204, 0);
+
+  /* neutrals */
+  --bg: #f6f8f5; 
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: rgba(15, 23, 42, 0.12);
+
+  /* accents */
+  --accent: var(--seu-green);
+  --accent-2: var(--seu-yellow);
+
+  /* states */
+  --red: #dc2626;
+  --red-soft: rgba(220, 38, 38, 0.12);
+
+  /* shadows */
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
+  --shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+/*    **** BASE **** */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+
 body {
   margin: 0;
-  background: #0b1220;
-  color: #eaf0ff;
+  background: var(--bg);
+  color: var(--text);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-/* ===== Page containers ===== */
-/* Use .page for admin/dashboard pages */
+/* nicer selection */
+::selection { background: rgba(255, 204, 0, 0.55); }
+
+/*  **** CONTAINERS **** */
+/* dashboard/admin pages */
 .page {
   min-height: 100vh;
   padding: 24px;
@@ -17,7 +46,7 @@ body {
   margin: 0 auto;
 }
 
-/* Use .wrap only for login (centered) */
+/* login page */
 .wrap {
   min-height: 100vh;
   padding: 24px;
@@ -26,7 +55,7 @@ body {
   justify-content: center;
 }
 
-/* ===== Top bars ===== */
+/*  **** HEADER / TOP BAR **** */
 .topbar, .top {
   display: flex;
   align-items: center;
@@ -44,34 +73,65 @@ body {
 .title, h1 {
   font-size: 34px;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
-/* ===== Grid/cards ===== */
+/* small SEU accent under titles (optional look, no HTML change needed) */
+.title::after, h1::after {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--seu-green), var(--seu-yellow));
+}
+
+/*    **** GRID / SECTIONS **** */
 .grid {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
-/* Admin should be vertical (rooms then requests) */
+/* Admin layout: stack sections vertically */
 .grid--stack {
   grid-template-columns: 1fr;
 }
 
 .card {
-  background: rgba(20, 30, 60, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 18px;
   padding: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-soft);
 }
 
-/* Login card must be limited width */
+/* small highlight line on top of each card */
+.card {
+  position: relative;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(61,142,0,0.65), rgba(255,204,0,0.65));
+}
+
+.expulsion-notif{
+  margin: 15px auto;
+}
+
+/* Login card width constraint */
 .card--auth {
   width: 100%;
   max-width: 520px;
   padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  box-shadow: var(--shadow);
 }
 
 .cardHeader, .rowHead {
@@ -82,130 +142,283 @@ body {
   margin-bottom: 10px;
 }
 
-/* ===== Buttons (admin style) ===== */
-.btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btnPrimary {
-  background: #2f6bff;
-  color: #fff;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.btnDanger {
-  background: #d64a4a;
-  color: #fff;
-  border: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-/* Make plain <button> look like .btn by default */
+/*    **** BUTTONS ****  */
+.btn,
 button {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 8px 10px;
-  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 12px;
   cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 0 rgba(15,23,42,0.05);
 }
-button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ===== Forms ===== */
+.btn:hover,
+button:hover {
+  border-color: rgba(61,142,0,0.35);
+  box-shadow: 0 8px 18px rgba(15,23,42,0.08);
+}
+
+.btn:active,
+button:active {
+  transform: translateY(1px);
+}
+
+.login-btn{
+  margin: 10px auto;
+  width: 100%;
+}
+
+/* disabled */
+.btn:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btnBlue {
+  background: var(--seu-green);
+  color: #ffffff;
+  border: 1px solid rgba(61,142,0,0.25);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.btnBlue:hover {
+  box-shadow: 0 14px 26px rgba(61,142,0,0.22);
+}
+
+.record-behavior-btn{
+  margin-top : 10px;
+}
+
+.btnRed{
+  background: var(--red);
+  color: #fff;
+  border: 1px solid rgba(220,38,38,0.25);
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(220,38,38,0.14);
+}
+
+.btnRed:hover {
+  box-shadow: 0 14px 26px rgba(220,38,38,0.18);
+}
+
+/*   **** FORMS (inputs/select/textarea/labels) ****  */
 label {
   display: block;
   margin-top: 12px;
-  opacity: 0.9;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 input, select, textarea {
   width: 100%;
   margin-top: 8px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-radius: 12px;
-  border: 1px solid #263a62;
-  background: #0b152b;
-  color: #e7eefc;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  background: #ffffff;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-textarea { min-height: 90px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: rgba(71,85,105,0.75); }
 
-.row { display: flex; gap: 10px; align-items: stretch; }
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(61,142,0,0.55);
+  box-shadow: 0 0 0 4px rgba(61,142,0,0.12);
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Used to have 2 inputs on same line */
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
 .row > * { flex: 1; }
 
-/* ===== Pills / messages ===== */
+/*  **** TEXT HELPERS / STATUS ****  */
+.muted { color: var(--muted); }
+
+.error, .err {
+  margin-top: 12px;
+  color: var(--red);
+  background: var(--red-soft);
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
 .pill {
   padding: 6px 10px;
   border-radius: 999px;
   font-size: 12px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
+  font-weight: 700;
+  border: 1px solid rgba(15,23,42,0.12);
+  background: rgba(15,23,42,0.04);
+  color: var(--text);
 }
 
-.muted { opacity: 0.75; }
-
-.error, .err {
-  margin-top: 12px;
-  color: #ff7b7b;
+/* status tags (admin room status) */
+.pillGreen {
+  background: rgba(61,142,0,0.12);
+  border: 1px solid rgba(61,142,0,0.25);
+  color: rgb(40, 105, 0);
 }
 
-/* ===== Lists ===== */
+.pillRed {
+  background: rgba(220,38,38,0.10);
+  border: 1px solid rgba(220,38,38,0.22);
+  color: rgb(160, 20, 20);
+}
+
+.score { font-weight: 800; }
+
+/*   **** LISTS : rooms list, interventions list an so on ***  */
 ul { padding-left: 18px; margin: 10px 0 0; }
-li { margin: 8px 0; }
+li { 
+  margin: 8px 0;
+  list-style-type: none;
+}
 
-.clickRow { cursor:pointer; padding: 6px 6px; border-radius: 10px; }
-.clickRow:hover { background: rgba(255,255,255,0.06); }
+/* Clickable list row (ex: choose room) */
+.clickRow {
+  cursor: pointer;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(15,23,42,0.02);
+  transition: 0.2s ease, border-color 0.2s ease, transform 0.05s ease;
+}
+.clickRow:hover {
+  background: rgba(61,142,0,0.06);
+  border-color: rgba(61,142,0,0.22);
+}
+.clickRow:active { transform: translateY(1px); }
 
-/* ===== Tables (admin) ===== */
+/*  **** TABLES (admin) **** */
 .table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 14px;
+  overflow: hidden;
 }
+
 th, td {
-  padding: 10px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   text-align: left;
 }
 
-/* ===== Optional: status pills ===== */
-.pillGreen {
-  background: rgba(0, 200, 120, 0.2);
-  border: 1px solid rgba(0, 200, 120, 0.35);
+thead th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: rgba(61,142,0,0.06);
 }
-.pillRed {
-  background: rgba(255, 80, 80, 0.2);
-  border: 1px solid rgba(255, 80, 80, 0.35);
+
+tbody tr:hover td {
+  background: rgba(255,204,0,0.10);
 }
-.score { font-weight: 700; }
 
-/* ===== Profile key/value rows ===== */
-.profile { margin-top: 8px; display: flex; flex-direction: column; gap: 10px; }
+/* **** PROFILE OF THE USER INTERFACE (key/value rows) **** */
+.profile {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-.kv {
+.profile-field {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 14px;
-  background: #0b152b;
-  border: 1px solid #263a62;
-  padding: 10px 12px;
-  border-radius: 12px;
+  background: rgba(15,23,42,0.02);
+  border: 1px solid rgba(15,23,42,0.10);
+  padding: 12px 12px;
+  border-radius: 14px;
 }
 
-.k { opacity: 0.75; }
-.v { font-weight: 600; }
+.profile-key { color: var(--muted); font-weight: 700; }
+.profile-value { font-weight: 700; }
 
-/* optional */
-.actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-.box { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(15,23,42,0.16);
+}
+
+/*  **** CONFIRM WINDOW (confirm room request) ****  */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,0.14);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.modalTitle { margin: 0 0 6px; }
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+
+/* **** INTERVENTION Service****  */
+
+.service-btn {
+  margin: 10px;
+}
+
+.description{
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  max-width: 420px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.intervention-block{
+  max-width: 700px;
+}

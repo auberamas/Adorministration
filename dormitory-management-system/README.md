@@ -1,35 +1,64 @@
-# Dormitory Management System (Clean, Minimal)
+# Adorministration - Dormitory Management System
 
 Vue (Vite) + Node/Express + MySQL.
 
+## Description
+The application is a system to manage a dormitory involving 4 type of actors:
+### The student
+- Can view profile
+- Can request one room
+- Must wait for admin approval
+- Must confirm payment after approval
+- Can request interventions
+
+### The receptionist
+- Can request interventions
+- Can record behavior penalties
+
+### The service
+Can accept / reject / complete interventions
+
+### Administrator
+- Sees rooms overview (occupancy and behavior score)
+- Accepts or rejects room requests
+
 ## Install
 ### Backend
-1. Open PowerShell:
-```powershell
+Open the terminal in vs code and enter the following:
+```
 cd dormitory-management-system\server
 npm install
 copy .env.example .env
-# edit .env and set DB_PASSWORD + JWT_SECRET
-npm run db:reset
-npm run db:migrate
-npm run db:seed
+```
+Goes to the .env (not .env.example) and the init-db.js files and set : DB_PASSWORD
+
+Initialize the database and lauch the server:
+```
+npm run db:init
 npm run dev
 ```
 Backend should print: `API listening on http://localhost:4000`
 
 ### Frontend
-```powershell
+Open a new terminal znd enter the following:
+```
 cd dormitory-management-system\client
 npm install
 copy .env.example .env
 npm run dev
 ```
 
+Frontend runs on : `http://localhost:5173`
+
 ## Seeded accounts
-- student1 / pass1234
-- reception1 / pass1234
-- service1 / pass1234
-- admin1 / pass1234
+| Role          | Username   | Password |
+| ------------- | ---------- | -------- |
+| Student       | student1   | pass1234 |
+| Student       | ...        | pass1234 |
+| Student       | student10  | pass1234 |
+| Receptionist  | reception1 | pass1234 |
+| Service       | service1   | pass1234 |
+| Administrator | admin1     | pass1234 |
 
 ## Health checks
 - http://localhost:4000/health

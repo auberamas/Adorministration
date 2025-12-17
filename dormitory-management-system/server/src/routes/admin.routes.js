@@ -109,7 +109,7 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
 
     await conn.beginTransaction();
 
-    // Lock the student row so 2 admins can't decide at the same time
+    // Lock the student row
     const [urows] = await conn.query(
       "SELECT id, requested_room_id, room_id FROM users WHERE id=? AND role='student' FOR UPDATE",
       [userId]

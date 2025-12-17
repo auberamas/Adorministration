@@ -23,7 +23,15 @@
   --shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.08);
 }
 
-/*    **** BASE **** */
+/* **** FAV ICON **** */
+.fav-icon{
+
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+
+/* **** BASE **** */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 
@@ -399,7 +407,6 @@ tbody tr:hover td {
   gap: 10px;
   margin-top: 12px;
 }
-
 
 /* **** INTERVENTION Service****  */
 

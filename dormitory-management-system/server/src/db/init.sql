@@ -8,7 +8,6 @@ CREATE TABLE dormitory (
   num_available_rooms INT NOT NULL
 );
 
--- capacity removed here
 CREATE TABLE rooms (
   id INT PRIMARY KEY AUTO_INCREMENT,
   building VARCHAR(50) NULL,

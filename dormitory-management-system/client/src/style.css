@@ -108,7 +108,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.btnPrimary {
+.btnBlue {
   background: #2f6bff;
   color: #fff;
   border: 0;
@@ -117,7 +117,7 @@ button:disabled {
   cursor: pointer;
 }
 
-.btnDanger {
+.btnRed {
   background: #d64a4a;
   color: #fff;
   border: 0;
@@ -278,4 +278,27 @@ th, td {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 12px;
+}
+
+
+/* **** INTERVENTION Service****  */
+
+.service-btn {
+  margin: 10px;
+}
+
+.description{
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  max-width: 420px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.intervention-block{
+  max-width: 700px;
 }

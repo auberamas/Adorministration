@@ -1,6 +1,5 @@
 # Adorministrator
 Project of Web programming and Object-oriented Analysis & Design with UML, I1-S5  
-Link to the github : https://github.com/auberamas/Adorministration.git
 
 
 ## Introduction 
@@ -59,8 +58,12 @@ Can accept / reject / complete interventions
 - Accepts or rejects room requests
   
 
-You now know hot to lauch the website and what to do with it.
+
+
+
+You now know how to launch the website and what to do with it.
 We hope you will like it :)
+
 
 
 ## Authors

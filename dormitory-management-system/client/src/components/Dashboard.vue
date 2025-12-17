@@ -243,7 +243,7 @@ export default {
       // user's basics info are saved in localStorage after login
       user: null,
 
-      // full user profile returned by backend (/api/me)
+      // full user profile
       me: null,
 
       // // lists used in user's interface
@@ -273,7 +273,7 @@ export default {
 
       // receptionist students dropdown
       students: [],
-      selectedStudentId: "", // IMPORTANT: keep string
+      selectedStudentId: "",
       loadingStudents: false,
 
       // behavior inputs
@@ -434,7 +434,7 @@ export default {
       }
     },
 
-    // Receptionist record behavior (deduct points)
+    // Receptionist record behavior
     async recordBehavior() {
       this.behError = "";
 
@@ -459,7 +459,7 @@ export default {
           points: Number(this.behDeduct)
         });
 
-        // keep the selected student (do NOT reset selectedStudentId)
+        // keep the selected student
         this.behDesc = "";
         this.behDeduct = 1;
       } catch (e) {

@@ -1,5 +1,5 @@
 // Database initialization script
-// This script creates the database and its tables by executing init.sql.
+// Creates the database and its tables by executing init.sql.
 
 import fs from "fs";
 import path from "path";

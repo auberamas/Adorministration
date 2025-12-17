@@ -77,7 +77,7 @@
                 <button class="btnPrimary" @click="decide(rq.user_id, 'approve')" :disabled="loading">
                   Accept
                 </button>
-                <button class="btnDanger" @click="decide(rq.user_id, 'reject')" :disabled="loading">
+                <button class="btnRed" @click="decide(rq.user_id, 'reject')" :disabled="loading">
                   Refuse
                 </button>
               </td>
@@ -115,7 +115,7 @@
                 <button class="btnPrimary" @click="updateBehaviorRecord(b.id,'approve')" :disabled="loading">
                   Accept
                 </button>
-                <button class="btnDanger" @click="updateBehaviorRecord(b.id,'reject')" :disabled="loading">
+                <button class="btnRed" @click="updateBehaviorRecord(b.id,'reject')" :disabled="loading">
                   Refuse
                 </button>
               </td>

@@ -161,6 +161,10 @@
           <button class="btnBlue" @click="createIntervention">Create</button>
         </div>
 
+        <p v-if="user?.role === 'service' && interventions.length === 0" class="muted">
+          No interventions requested yet.
+        </p>
+
         <ul class="list">
           <li v-for="it in interventions" :key="it.id">
             <div>
@@ -213,8 +217,7 @@
         />
         <input v-model="behDesc" placeholder="description" />
 
-        <button class="btnPrimary record-behavior-btn" @click="recordBehavior" :disabled="loadingBehavior">
-        <button class="btnBlue service-btn" @click="recordBehavior" :disabled="loadingBehavior">
+        <button class="btnBlue record-behavior-btn" @click="recordBehavior" :disabled="loadingBehavior">
           {{ loadingBehavior ? "..." : "Record" }}
         </button>
 

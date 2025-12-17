@@ -32,13 +32,13 @@
 
         <!-- Show user data -->
         <div v-if="me" class="profile">
-          <div class="kv"><span class="k">Name</span><span class="v">{{ me.name }}</span></div>
-          <div class="kv"><span class="k">Username</span><span class="v">{{ me.username }}</span></div>
-          <div class="kv"><span class="k">Role</span><span class="v">{{ me.role }}</span></div>
+          <div class="profile-field"><span class="profile-key">Name</span><span class="profile-value">{{ me.name }}</span></div>
+          <div class="profile-field"><span class="profile-key">Username</span><span class="profile-value">{{ me.username }}</span></div>
+          <div class="profile-field"><span class="profile-key">Role</span><span class="profile-value">{{ me.role }}</span></div>
 
-          <div class="kv">
-            <span class="k">Room</span>
-            <span class="v">
+          <div class="profile-field">
+            <span class="profile-key">Room</span>
+            <span class="profile-value">
               <template v-if="me.room_number">
                 {{ me.building ? me.building + " - " : "" }}{{ me.room_number }}
               </template>
@@ -46,21 +46,21 @@
             </span>
           </div>
 
-          <div class="kv"><span class="k">Paid</span><span class="v">{{ me.paid ? "Yes" : "No" }}</span></div>
-          <div class="kv">
-            <span class="k">Behavior score</span>
-            <span class="v">{{ me?.behavior_score ?? "—" }}</span>
-          </div>
+          <div class="profile-field"><span class="profile-key">Paid</span><span class="profile-value">{{ me.paid ? "Yes" : "No" }}</span></div>
+          <div class="profile-field">
+            <span class="profile-key">Behavior score</span>
+            <span class="profile-value">{{ me?.behavior_score ?? "—" }}</span>
+        </div>
 
-          <div class="kv">
-            <span class="k">Email</span>
-            <span class="v" v-if="!editProfile">{{ me.email ?? "—" }}</span>
+          <div class="profile-field">
+            <span class="profile-key">Email</span>
+            <span class="profile-value" v-if="!editProfile">{{ me.email ?? "—" }}</span>
             <input v-else v-model="editEmail" placeholder="email" />
           </div>
 
-          <div class="kv">
-            <span class="k">Phone</span>
-            <span class="v" v-if="!editProfile">{{ me.phone ?? "—" }}</span>
+          <div class="profile-field">
+            <span class="profile-key">Phone</span>
+            <span class="profile-value" v-if="!editProfile">{{ me.phone ?? "—" }}</span>
             <input
               v-else
               v-model="editPhone"

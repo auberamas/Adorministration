@@ -222,7 +222,7 @@ th, td {
   gap: 10px;
 }
 
-.kv {
+.profile-field {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -233,8 +233,8 @@ th, td {
   border-radius: 12px;
 }
 
-.k { opacity: 0.75; }
-.v { font-weight: 600; }
+.profile-key { opacity: 0.75; }
+.profile-value { font-weight: 600; }
 
 .actions {
   display: flex;

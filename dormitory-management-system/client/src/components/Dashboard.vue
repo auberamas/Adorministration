@@ -203,7 +203,7 @@
         />
         <input v-model="behDesc" placeholder="description" />
 
-        <button class="btnBlue" @click="recordBehavior" :disabled="loadingBehavior">
+        <button class="btnBlue service-btn" @click="recordBehavior" :disabled="loadingBehavior">
           {{ loadingBehavior ? "..." : "Record" }}
         </button>
 

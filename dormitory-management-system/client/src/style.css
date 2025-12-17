@@ -70,6 +70,10 @@ body {
   overflow: hidden;
 }
 
+.expulsion-notif{
+  margin: 15px auto;
+}
+
 /* Login card width constraint */
 .card--auth {
   width: 100%;

@@ -11,6 +11,12 @@
       </div>
     </div>
 
+    <!-- To notify expultion -->
+    <div class="card expulsion-notif" v-if="user?.role==='student' && me?.expelled">
+      <p class="error">
+        Your behavior score reached 0. You are subject to expulsion. Please contact the administration immediately.
+      </p>
+    </div>
     <div class="grid">
        <!-- for student role : if admin approved a room student have to pay-->
       <div class="card" v-if="user?.role==='student' && me?.room_id && !me?.paid">

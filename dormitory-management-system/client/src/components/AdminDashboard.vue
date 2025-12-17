@@ -112,10 +112,10 @@
               <td>{{ b.points }}</td>
               <td>{{ b.description }}</td>
               <td class="actions">
-                <button class="btnPrimary" @click="decideBehaviorRequest(b.id,'approve')" :disabled="loading">
+                <button class="btnPrimary" @click="updateBehaviorRecord(b.id,'approve')" :disabled="loading">
                   Accept
                 </button>
-                <button class="btnDanger" @click="decideBehaviorRequest(b.id,'reject')" :disabled="loading">
+                <button class="btnDanger" @click="updateBehaviorRecord(b.id,'reject')" :disabled="loading">
                   Refuse
                 </button>
               </td>
@@ -164,7 +164,7 @@ export default {
       this.behaviorRequests = data;
     },
 
-    async decideBehaviorRequest(id, decision) {
+    async updateBehaviorRecord(id, decision) {
       await api.post(`/api/admin/behavior-requests/${id}/decide`, { decision });
       await this.loadBehaviorRequests();
       await this.loadRooms(); // behavior score updates immediately in rooms overview

@@ -62,7 +62,7 @@ export default {
 
       } catch (e) {
         // If login fails, show error message
-        this.error = e?.response?.data?.error || e.message || "Login failed";
+        this.error = "Incorrect username or password";
       } finally {
         this.loading = false;
       }

@@ -4,6 +4,29 @@ import { Router } from "express";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
 import { pool } from "../db/pool.js";
 
+// If score <= 0, the student is expelled in the users table
+async function updateExpelledFlag(studentId) {
+  // Get score
+  const [rows] = await pool.query(
+    `
+    SELECT (20 + IFNULL(SUM(points),0)) AS raw_score
+    FROM behavior_records
+    WHERE student_id = ?
+    `,
+    [studentId]
+  );
+
+  const rawScore = Number(rows[0]?.raw_score ?? 20);
+
+  // expelled = 1 if score <= 0, else expelled = 0
+  const expelled = rawScore <= 0 ? 1 : 0;
+
+  await pool.query(
+    "UPDATE users SET expelled=? WHERE id=? AND role='student'",
+    [expelled, studentId]
+  );
+}
+
 const router = Router();
 
 // All routes in this file require the user to be authenticated and have role "admin"
@@ -71,7 +94,7 @@ router.get("/room-requests", async (_req, res, next) => {
 
 /**
  * ROOM REQUEST DECISION
- * - reject  => clear requested_room_id + notify student
+ * - reject  => clear requested_room_id
  * - approve => assign room_id, clear request, set room occupied, paid=0 + notify student to pay
  */
 router.post("/room-requests/:userId/decide", async (req, res, next) => {
@@ -98,16 +121,6 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
     if (decision === "reject") {
       await pool.query("UPDATE users SET requested_room_id=NULL WHERE id=?", [userId]);
 
-      // Notify student
-      await pool.query(
-        "INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)",
-        [
-          userId,
-          "Room request refused",
-          "Your room request has been refused. Please choose another available room and submit a new request.",
-        ]
-      );
-
       return res.json({ ok: true });
     }
 
@@ -119,16 +132,6 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
 
     // Mark room as occupied
     await pool.query("UPDATE rooms SET status='occupied' WHERE id=?", [requested]);
-
-    // Notify student to pay
-    await pool.query(
-      "INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)",
-      [
-        userId,
-        "Room request accepted",
-        "Your room request has been accepted. Please proceed to payment to confirm your accommodation.",
-      ]
-    );
 
     res.json({ ok: true });
   } catch (e) {
@@ -220,6 +223,10 @@ router.post("/behavior-requests/:id/decide", async (req, res, next) => {
     );
 
     await pool.query("UPDATE behavior_requests SET status='approved' WHERE id=?", [id]);
+
+    // Update expelled flag based on the new score
+    await updateExpelledFlag(brq.student_id);
+
 
     res.json({ ok: true });
   } catch (e) {

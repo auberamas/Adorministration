@@ -58,7 +58,6 @@ CREATE TABLE behavior_records (
   CONSTRAINT fk_beh_recorder FOREIGN KEY (recorded_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
-
 CREATE TABLE behavior_requests (
   id INT PRIMARY KEY AUTO_INCREMENT,
   student_id INT NOT NULL,
@@ -75,7 +74,6 @@ CREATE INDEX idx_behavior_requests_status ON behavior_requests(status);
 CREATE INDEX idx_users_room ON users(room_id);
 CREATE INDEX idx_users_requested_room ON users(requested_room_id);
 
--- capacity removed in INSERT
 INSERT INTO rooms (building, room_number, status) VALUES
 ('A', '101', 'available'),
 ('A', '102', 'available'),

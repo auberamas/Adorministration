@@ -24,8 +24,8 @@ Can accept / reject / complete interventions
 
 ## Install
 ### Backend
-1. Open PowerShell:
-```powershell
+1. Open the terminal in vs code and enter the following:
+```
 cd dormitory-management-system\server
 npm install
 copy .env.example .env

@@ -19,7 +19,7 @@ const {
   DB_HOST = "localhost",
   DB_PORT = "3306",
   DB_USER = "root",
-  DB_PASSWORD = "au27ra94SQL",
+  DB_PASSWORD = "",
 } = process.env;
 
 async function main() {

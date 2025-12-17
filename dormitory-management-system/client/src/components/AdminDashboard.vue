@@ -91,6 +91,43 @@
 
         <p v-if="error" class="error">{{ error }}</p>
       </section>
+
+      <section class="card">
+        <div class="cardHeader">
+          <h2>Behavior Requests</h2>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Points to remove</th>
+              <th>Reason</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in behaviorRequests" :key="b.id">
+              <td>{{ b.student_name }} ({{ b.student_username }})</td>
+              <td>{{ b.points }}</td>
+              <td>{{ b.description }}</td>
+              <td class="actions">
+                <button class="btnPrimary" @click="decideBehaviorRequest(b.id,'approve')" :disabled="loading">
+                  Accept
+                </button>
+                <button class="btnDanger" @click="decideBehaviorRequest(b.id,'reject')" :disabled="loading">
+                  Refuse
+                </button>
+              </td>
+            </tr>
+
+            <tr v-if="!behaviorRequests.length">
+              <td colspan="4" class="muted">No behavior requests.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
     </div>
   </div>
 </template>
@@ -110,6 +147,8 @@ const requests = ref([]);
 const loading = ref(false);
 const error = ref("");
 
+const behaviorRequests = ref([]);
+
 // If the user refreshes the page, set token again so API calls work
 const token = localStorage.getItem("token");
 if (token) setAuthToken(token);
@@ -119,6 +158,17 @@ function logout() {
   localStorage.removeItem("user");
   setAuthToken(null);
   router.push("/");
+}
+
+async function loadBehaviorRequests() {
+  const { data } = await api.get("/api/admin/behavior-requests");
+  behaviorRequests.value = data;
+}
+
+async function decideBehaviorRequest(id, decision) {
+  await api.post(`/api/admin/behavior-requests/${id}/decide`, { decision });
+  await loadBehaviorRequests();
+  await loadRooms(); // behavior score updates immediately in rooms overview
 }
 
 async function loadRooms() {
@@ -137,7 +187,7 @@ async function loadAll() {
   error.value = "";
   loading.value = true;
   try {
-    await Promise.all([loadRooms(), loadRequests()]);
+    await Promise.all([loadRooms(), loadRequests(), loadBehaviorRequests()]);
   } catch (e) {
     error.value = e?.response?.data?.error || e.message || "Failed to load";
   } finally {

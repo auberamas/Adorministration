@@ -8,7 +8,6 @@ CREATE TABLE dormitory (
   num_available_rooms INT NOT NULL
 );
 
--- capacity removed here
 CREATE TABLE rooms (
   id INT PRIMARY KEY AUTO_INCREMENT,
   building VARCHAR(50) NULL,
@@ -52,11 +51,25 @@ CREATE TABLE behavior_records (
   student_id INT NOT NULL,
   recorded_by INT NOT NULL,
   description VARCHAR(500) NOT NULL,
-  points INT NOT NULL,
+  points INT NOT NULL, -- store NEGATIVE values 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_beh_student FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_beh_recorder FOREIGN KEY (recorded_by) REFERENCES users(id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE behavior_requests (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  student_id INT NOT NULL,
+  requested_by INT NOT NULL,
+  description VARCHAR(500) NOT NULL,
+  points INT NOT NULL,
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_behavior_requests_status ON behavior_requests(status);
 
 CREATE TABLE notifications (
   id INT PRIMARY KEY AUTO_INCREMENT,

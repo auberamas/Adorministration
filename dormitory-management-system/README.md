@@ -30,19 +30,17 @@ cd dormitory-management-system\server
 npm install
 copy .env.example .env
 ```
-Edit .env and set :
-- DB_PASSWORD
-- JWT_SECRET
+Goes to the .env (not .env.example) and the inidt-db.js files and set : DB_PASSWORD
 
 Initialize the database and lauch the server:
-```powershell
+```
 npm run db:init
 npm run dev
 ```
 Backend should print: `API listening on http://localhost:4000`
 
 ### Frontend
-```powershell
+```
 cd dormitory-management-system\client
 npm install
 copy .env.example .env

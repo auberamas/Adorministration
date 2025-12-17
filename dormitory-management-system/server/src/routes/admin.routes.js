@@ -98,6 +98,7 @@ router.get("/room-requests", async (_req, res, next) => {
  * - approve => assign room_id, clear request, set room occupied, paid=0 + notify student to pay
  */
 router.post("/room-requests/:userId/decide", async (req, res, next) => {
+  const conn = await pool.getConnection();
   try {
     const userId = Number(req.params.userId);
     const { decision } = req.body || {};
@@ -106,36 +107,60 @@ router.post("/room-requests/:userId/decide", async (req, res, next) => {
       return res.status(400).json({ error: "decision must be approve|reject" });
     }
 
-    // Retrieve the student's pending room request
-    const [urows] = await pool.query(
-      "SELECT id, requested_room_id FROM users WHERE id=? AND role='student'",
+    await conn.beginTransaction();
+
+    // Lock the student row so 2 admins can't decide at the same time
+    const [urows] = await conn.query(
+      "SELECT id, requested_room_id, room_id FROM users WHERE id=? AND role='student' FOR UPDATE",
       [userId]
     );
 
-    const requested = urows[0]?.requested_room_id;
+    const user = urows[0];
+    const requested = user?.requested_room_id;
 
-    // Ensure a pending request exists
-    if (!requested) return res.status(400).json({ error: "No pending request" });
+    if (!requested) {
+      await conn.rollback();
+      return res.status(400).json({ error: "No pending request" });
+    }
 
     // Reject case
     if (decision === "reject") {
-      await pool.query("UPDATE users SET requested_room_id=NULL WHERE id=?", [userId]);
-
+      await conn.query("UPDATE users SET requested_room_id=NULL WHERE id=?", [userId]);
+      await conn.commit();
       return res.json({ ok: true });
     }
 
-    // Approve case: assign the room
-    await pool.query(
+    // Approve case: occupy room ONLY if still available
+    const [roomUpdate] = await conn.query(
+      "UPDATE rooms SET status='occupied' WHERE id=? AND status='available'",
+      [requested]
+    );
+
+    // If affectedRows === 0, someone already took it
+    if (roomUpdate.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(409).json({ error: "Room already taken" });
+    }
+
+    // Assign room to this student
+    await conn.query(
       "UPDATE users SET room_id=?, requested_room_id=NULL, paid=0 WHERE id=?",
       [requested, userId]
     );
 
-    // Mark room as occupied
-    await pool.query("UPDATE rooms SET status='occupied' WHERE id=?", [requested]);
+    // Optional but recommended: clear ALL other requests for the same room
+    await conn.query(
+      "UPDATE users SET requested_room_id=NULL WHERE requested_room_id=?",
+      [requested]
+    );
 
+    await conn.commit();
     res.json({ ok: true });
   } catch (e) {
+    try { await conn.rollback(); } catch {}
     next(e);
+  } finally {
+    conn.release();
   }
 });
 

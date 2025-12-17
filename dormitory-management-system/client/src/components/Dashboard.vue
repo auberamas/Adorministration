@@ -192,7 +192,7 @@
         />
         <input v-model="behDesc" placeholder="description" />
 
-        <button class="btnPrimary" @click="recordBehavior" :disabled="loadingBehavior">
+        <button class="btnPrimary record-behavior-btn" @click="recordBehavior" :disabled="loadingBehavior">
           {{ loadingBehavior ? "..." : "Record" }}
         </button>
 

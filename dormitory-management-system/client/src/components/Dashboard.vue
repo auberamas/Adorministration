@@ -47,6 +47,10 @@
           </div>
 
           <div class="kv"><span class="k">Paid</span><span class="v">{{ me.paid ? "Yes" : "No" }}</span></div>
+          <div class="kv">
+            <span class="k">Behavior score</span>
+            <span class="v">{{ me?.behavior_score ?? "—" }}</span>
+          </div>
 
           <div class="kv">
             <span class="k">Email</span>

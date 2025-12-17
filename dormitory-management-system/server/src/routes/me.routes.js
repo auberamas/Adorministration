@@ -5,7 +5,7 @@ import { pool } from "../db/pool.js";
 
 const router = Router();
 
-// Return user's informations
+// Return user, room_number and requested_room_number
 router.get("/", requireAuth, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
@@ -16,11 +16,17 @@ router.get("/", requireAuth, async (req, res, next) => {
         r1.room_number AS room_number,
         r1.building AS building,
         r2.room_number AS requested_room_number,
-        r2.building AS requested_building
+        r2.building AS requested_building,
+
+        -- behavior score between 0 and 20
+        GREATEST(0, LEAST(20, 20 + IFNULL(SUM(br.points),0))) AS behavior_score
+
       FROM users u
       LEFT JOIN rooms r1 ON r1.id = u.room_id
       LEFT JOIN rooms r2 ON r2.id = u.requested_room_id
-      WHERE u.id=:id
+      LEFT JOIN behavior_records br ON br.student_id = u.id
+      WHERE u.id = :id
+      GROUP BY u.id
       `,
       { id: req.user.sub }
     );
@@ -29,6 +35,7 @@ router.get("/", requireAuth, async (req, res, next) => {
     next(e);
   }
 });
+
 
 // Student can update only email and phone
 router.patch("/", requireAuth, async (req, res, next) => {

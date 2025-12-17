@@ -197,270 +197,280 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+<script>
 import api, { setAuthToken } from "../api";
 
-const router = useRouter();
+export default {
+  name: "Dashboard",
 
-// user's basics info are saved in localStorage after login
-const user = ref(null);
+  data() {
+    return {
+      // user's basics info are saved in localStorage after login
+      user: null,
 
-// full user profile returned by backend (/api/me)
-const me = ref(null);
+      // full user profile returned by backend (/api/me)
+      me: null,
 
-// // lists used in user's interface
-const availableRooms = ref([]);
-const interventions = ref([]);
+      // // lists used in user's interface
+      availableRooms: [],
+      interventions: [],
 
-// Error message
-const error = ref("");
+      // Error message
+      error: "",
 
-const newType = ref("cleaning");
-const newDesc = ref("");
+      newType: "cleaning",
+      newDesc: "",
 
-// student room request confirmation
-const showRoomConfirm = ref(false);
-const selectedRoom = ref(null);
-const confirmingRoom = ref(false);
-const roomConfirmError = ref("");
+      // student room request confirmation
+      showRoomConfirm: false,
+      selectedRoom: null,
+      confirmingRoom: false,
+      roomConfirmError: "",
 
-const editProfile = ref(false);
-const editEmail = ref("");
-const editPhone = ref("");
-const savingProfile = ref(false);
-const profileError = ref("");
+      editProfile: false,
+      editEmail: "",
+      editPhone: "",
+      savingProfile: false,
+      profileError: "",
 
-const loadingPay = ref(false);
-const payError = ref("");
+      loadingPay: false,
+      payError: "",
 
-// receptionist students dropdown
-const students = ref([]);
-const selectedStudentId = ref(""); // IMPORTANT: keep string
-const loadingStudents = ref(false);
+      // receptionist students dropdown
+      students: [],
+      selectedStudentId: "", // IMPORTANT: keep string
+      loadingStudents: false,
 
-// behavior inputs
-const behDeduct = ref(1);
-const behDesc = ref("");
-const behError = ref("");
-const loadingBehavior = ref(false);
+      // behavior inputs
+      behDeduct: 1,
+      behDesc: "",
+      behError: "",
+      loadingBehavior: false,
+    };
+  },
 
-// Logout
-function logout() {
-  // Remove saved login data
-  localStorage.removeItem("token");
+  methods: {
+    // Logout
+    logout() {
+      // Remove saved login data
+      localStorage.removeItem("token");
 
-  localStorage.removeItem("user");
-  // Remove token from API requests
-  setAuthToken(null);
+      localStorage.removeItem("user");
+      // Remove token from API requests
+      setAuthToken(null);
 
-  // Go back to login page
-  router.push("/login");
-}
+      // Go back to login page
+      this.$router.push("/login");
+    },
 
-// Load current user profile
-async function loadMe() {
-  const { data } = await api.get("/api/me");
-  me.value = data;
-}
+    // Load current user profile
+    async loadMe() {
+      const { data } = await api.get("/api/me");
+      this.me = data;
+    },
 
-// Load available rooms 
-async function loadAvailableRooms() {
-  const { data } = await api.get("/api/rooms/available");
-  availableRooms.value = data;
-}
+    // Load available rooms 
+    async loadAvailableRooms() {
+      const { data } = await api.get("/api/rooms/available");
+      this.availableRooms = data;
+    },
 
-async function requestRoom(roomId) {
-  await api.post("/api/rooms/request", { roomId });
-  await loadMe();
-}
+    async requestRoom(roomId) {
+      await api.post("/api/rooms/request", { roomId });
+      await this.loadMe();
+    },
 
-function openRoomConfirm(room) {
-  roomConfirmError.value = "";
-  selectedRoom.value = room;
-  showRoomConfirm.value = true;
-}
+    openRoomConfirm(room) {
+      this.roomConfirmError = "";
+      this.selectedRoom = room;
+      this.showRoomConfirm = true;
+    },
 
-function closeRoomConfirm() {
-  showRoomConfirm.value = false;
-  selectedRoom.value = null;
-  confirmingRoom.value = false;
-  roomConfirmError.value = "";
-}
+    closeRoomConfirm() {
+      this.showRoomConfirm = false;
+      this.selectedRoom = null;
+      this.confirmingRoom = false;
+      this.roomConfirmError = "";
+    },
 
-// Confirm button inside the modal
-async function confirmRoomRequest() {
-  if (!selectedRoom.value?.id) return;
-  confirmingRoom.value = true;
-  roomConfirmError.value = "";
-  try {
-    await requestRoom(selectedRoom.value.id);
-    closeRoomConfirm();
+    // Confirm button inside the modal
+    async confirmRoomRequest() {
+      if (!this.selectedRoom?.id) return;
+      this.confirmingRoom = true;
+      this.roomConfirmError = "";
+      try {
+        await this.requestRoom(this.selectedRoom.id);
+        this.closeRoomConfirm();
 
-    // Force disconnection
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setAuthToken(null);
+        // Force disconnection
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setAuthToken(null);
 
-    // Redirect to login
-    await router.push("/login");
-  } catch (e) {
-    roomConfirmError.value = e?.response?.data?.error || e.message || "Request failed";
-  } finally {
-    confirmingRoom.value = false;
-  }
-}
+        // Redirect to login
+        await this.$router.push("/login");
+      } catch (e) {
+        this.roomConfirmError = e?.response?.data?.error || e.message || "Request failed";
+      } finally {
+        this.confirmingRoom = false;
+      }
+    },
 
-async function loadInterventions() {
-  const { data } = await api.get("/api/interventions");
-  interventions.value = data;
+    async loadInterventions() {
+      const { data } = await api.get("/api/interventions");
+      let list = data;
 
-  if (user.value?.role === "service") {
-    interventions.value = interventions.value.filter(i => ["pending", "accepted"].includes(i.status));
-  }
-}
+      if (this.user?.role === "service") {
+        list = list.filter(i => ["pending", "accepted"].includes(i.status));
+      }
 
-async function createIntervention() {
-  const payload = { type: newType.value, description: newDesc.value };
+      this.interventions = list;
+    },
 
-  await api.post("/api/interventions", payload);
-  newDesc.value = "";
-  await loadInterventions();
-}
+    async createIntervention() {
+      const payload = { type: this.newType, description: this.newDesc };
 
-async function setStatus(id, status) {
-  await api.post(`/api/interventions/${id}/status`, { status });
-  await loadInterventions();
-}
+      await api.post("/api/interventions", payload);
+      this.newDesc = "";
+      await this.loadInterventions();
+    },
 
-function startEdit() {
-  profileError.value = "";
-  editProfile.value = true;
-  editEmail.value = me.value?.email ?? "";
-  editPhone.value = me.value?.phone ?? "";
-}
+    async setStatus(id, status) {
+      await api.post(`/api/interventions/${id}/status`, { status });
+      await this.loadInterventions();
+    },
 
-function cancelEdit() {
-  editProfile.value = false;
-  profileError.value = "";
-}
+    startEdit() {
+      this.profileError = "";
+      this.editProfile = true;
+      this.editEmail = this.me?.email ?? "";
+      this.editPhone = this.me?.phone ?? "";
+    },
 
-async function saveProfile() {
-  savingProfile.value = true;
-  profileError.value = "";
-  try {
-    const { data } = await api.patch("/api/me", { email: editEmail.value, phone: editPhone.value });
-    me.value = data;
-    editProfile.value = false;
-  } catch (e) {
-    profileError.value = e?.response?.data?.error || e.message || "Update failed";
-  } finally {
-    savingProfile.value = false;
-  }
-}
+    cancelEdit() {
+      this.editProfile = false;
+      this.profileError = "";
+    },
 
-async function payRoom() {
-  loadingPay.value = true;
-  payError.value = "";
-  try {
-    await api.post("/api/me/pay");
-    await loadMe();
-  } catch (e) {
-    payError.value = e?.response?.data?.error || e.message || "Payment failed";
-  } finally {
-    loadingPay.value = false;
-  }
-}
+    async saveProfile() {
+      this.savingProfile = true;
+      this.profileError = "";
+      try {
+        const { data } = await api.patch("/api/me", { email: this.editEmail, phone: this.editPhone });
+        this.me = data;
+        this.editProfile = false;
+      } catch (e) {
+        this.profileError = e?.response?.data?.error || e.message || "Update failed";
+      } finally {
+        this.savingProfile = false;
+      }
+    },
 
-// Receptionist load students list for behavior dropdown
-async function loadStudents() {
-  loadingStudents.value = true;
-  behError.value = "";
-  try {
-    const { data } = await api.get("/api/students");
-    students.value = data;
+    async payRoom() {
+      this.loadingPay = true;
+      this.payError = "";
+      try {
+        await api.post("/api/me/pay");
+        await this.loadMe();
+      } catch (e) {
+        this.payError = e?.response?.data?.error || e.message || "Payment failed";
+      } finally {
+        this.loadingPay = false;
+      }
+    },
 
-    // If current selection is missing or not in the list, select the first student
-    const exists = students.value.some(s => String(s.id) === String(selectedStudentId.value));
-    if (!exists) {
-      selectedStudentId.value = "";
-    }
-  } catch (e) {
-    behError.value = e?.response?.data?.error || e.message || "Failed to load students";
-  } finally {
-    loadingStudents.value = false;
-  }
-}
+    // Receptionist load students list for behavior dropdown
+    async loadStudents() {
+      this.loadingStudents = true;
+      this.behError = "";
+      try {
+        const { data } = await api.get("/api/students");
+        this.students = data;
 
-// Receptionist record behavior (deduct points)
-async function recordBehavior() {
-  behError.value = "";
+        // If current selection is missing or not in the list, select the first student
+        const exists = this.students.some(s => String(s.id) === String(this.selectedStudentId));
+        if (!exists) {
+          this.selectedStudentId = "";
+        }
+      } catch (e) {
+        this.behError = e?.response?.data?.error || e.message || "Failed to load students";
+      } finally {
+        this.loadingStudents = false;
+      }
+    },
 
-  if (!selectedStudentId.value) {
-    behError.value = "Please select a student";
-    return;
-  }
-  if (!behDesc.value.trim()) {
-    behError.value = "Please enter a description";
-    return;
-  }
-  if (!Number.isFinite(Number(behDeduct.value)) || Number(behDeduct.value) <= 0) {
-    behError.value = "Points must be a positive number";
-    return;
-  }
+    // Receptionist record behavior (deduct points)
+    async recordBehavior() {
+      this.behError = "";
 
-  loadingBehavior.value = true;
-  try {
-    await api.post("/api/behavior", {
-      studentId: Number(selectedStudentId.value),
-      description: behDesc.value.trim(),
-      points: Number(behDeduct.value)
-    });
+      if (!this.selectedStudentId) {
+        this.behError = "Please select a student";
+        return;
+      }
+      if (!this.behDesc.trim()) {
+        this.behError = "Please enter a description";
+        return;
+      }
+      if (!Number.isFinite(Number(this.behDeduct)) || Number(this.behDeduct) <= 0) {
+        this.behError = "Points must be a positive number";
+        return;
+      }
 
-    // keep the selected student (do NOT reset selectedStudentId)
-    behDesc.value = "";
-    behDeduct.value = 1;
-  } catch (e) {
-    behError.value = e?.response?.data?.error || e.message || "Record failed";
-  } finally {
-    loadingBehavior.value = false;
-  }
-}
+      this.loadingBehavior = true;
+      try {
+        await api.post("/api/behavior", {
+          studentId: Number(this.selectedStudentId),
+          description: this.behDesc.trim(),
+          points: Number(this.behDeduct)
+        });
 
-// Main function when dashboard loads
-async function init() {
+        // keep the selected student (do NOT reset selectedStudentId)
+        this.behDesc = "";
+        this.behDeduct = 1;
+      } catch (e) {
+        this.behError = e?.response?.data?.error || e.message || "Record failed";
+      } finally {
+        this.loadingBehavior = false;
+      }
+    },
 
-  // Check if token exists (if not, go login)
-  const token = localStorage.getItem("token");
-  if (!token) return router.push("/login");
+    // Main function when dashboard loads
+    async init() {
 
-  // Attach token to API requests
-  setAuthToken(token);
+      // Check if token exists (if not, go login)
+      const token = localStorage.getItem("token");
+      if (!token) return this.$router.push("/login");
 
-  // Read basic user info from localStorage
-  user.value = JSON.parse(localStorage.getItem("user") || "null");
-  if (user.value?.role === "admin") return router.push("/admin");
+      // Attach token to API requests
+      setAuthToken(token);
 
-  try {
-    // Load data needed for the dashboard
-    await loadMe();
+      // Read basic user info from localStorage
+      this.user = JSON.parse(localStorage.getItem("user") || "null");
+      if (this.user?.role === "admin") return this.$router.push("/admin");
 
-    // If admin, redirect to admin page
-    if (user.value?.role === "student") {
-      if (!me.value?.room_id && !me.value?.requested_room_id) await loadAvailableRooms();
-    }
+      try {
+        // Load data needed for the dashboard
+        await this.loadMe();
 
-    if (user.value?.role === "receptionist") {
-      await loadStudents();
-    }
+        // If admin, redirect to admin page
+        if (this.user?.role === "student") {
+          if (!this.me?.room_id && !this.me?.requested_room_id) await this.loadAvailableRooms();
+        }
 
-    await loadInterventions();
-  } catch (e) {
-    error.value = e?.response?.data?.error || e.message;
-  }
-}
+        if (this.user?.role === "receptionist") {
+          await this.loadStudents();
+        }
 
-// Run init() automatically when the page opens
-onMounted(init);
+        await this.loadInterventions();
+      } catch (e) {
+        this.error = e?.response?.data?.error || e.message;
+      }
+    },
+  },
+
+  mounted() {
+    // Run init() automatically when the page opens
+    this.init();
+  },
+};
 </script>

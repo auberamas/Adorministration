@@ -132,83 +132,90 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+<script>
 import api, { setAuthToken } from "../api";
 
-const router = useRouter();
+export default {
+  name: "AdminDashboard",
 
-// Data shown in tables
-const rooms = ref([]);
-const requests = ref([]);
+  data() {
+    return {
+      // Data shown in tables
+      rooms: [],
+      requests: [],
+      behaviorRequests: [],
 
-// User interface state
-const loading = ref(false);
-const error = ref("");
+      // User interface state
+      loading: false,
+      error: "",
+    };
+  },
 
-const behaviorRequests = ref([]);
+  methods: {
+    logout() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setAuthToken(null);
+      this.$router.push("/");
+    },
 
-// If the user refreshes the page, set token again so API calls work
-const token = localStorage.getItem("token");
-if (token) setAuthToken(token);
+    async loadBehaviorRequests() {
+      const { data } = await api.get("/api/admin/behavior-requests");
+      this.behaviorRequests = data;
+    },
 
-function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  setAuthToken(null);
-  router.push("/");
-}
+    async decideBehaviorRequest(id, decision) {
+      await api.post(`/api/admin/behavior-requests/${id}/decide`, { decision });
+      await this.loadBehaviorRequests();
+      await this.loadRooms(); // behavior score updates immediately in rooms overview
+    },
 
-async function loadBehaviorRequests() {
-  const { data } = await api.get("/api/admin/behavior-requests");
-  behaviorRequests.value = data;
-}
+    async loadRooms() {
+      const { data } = await api.get("/api/admin/rooms-overview");
+      this.rooms = data;
+    },
 
-async function decideBehaviorRequest(id, decision) {
-  await api.post(`/api/admin/behavior-requests/${id}/decide`, { decision });
-  await loadBehaviorRequests();
-  await loadRooms(); // behavior score updates immediately in rooms overview
-}
+    // Load pending requests
+    async loadRequests() {
+      const { data } = await api.get("/api/admin/room-requests");
+      this.requests = data;
+    },
 
-async function loadRooms() {
-  const { data } = await api.get("/api/admin/rooms-overview");
-  rooms.value = data;
-}
+    // Load both tables together
+    async loadAll() {
+      this.error = "";
+      this.loading = true;
+      try {
+        await Promise.all([this.loadRooms(), this.loadRequests(), this.loadBehaviorRequests()]);
+      } catch (e) {
+        this.error = e?.response?.data?.error || e.message || "Failed to load";
+      } finally {
+        this.loading = false;
+      }
+    },
 
-// Load pending requests
-async function loadRequests() {
-  const { data } = await api.get("/api/admin/room-requests");
-  requests.value = data;
-}
+    // Approve or reject a request, then reload data
+    async decide(userId, decision) {
+      this.error = "";
+      this.loading = true;
+      try {
+        await api.post(`/api/admin/room-requests/${userId}/decide`, { decision });
+        await this.loadAll();
+      } catch (e) {
+        this.error = e?.response?.data?.error || e.message || "Action failed";
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
 
-// Load both tables together
-async function loadAll() {
-  error.value = "";
-  loading.value = true;
-  try {
-    await Promise.all([loadRooms(), loadRequests(), loadBehaviorRequests()]);
-  } catch (e) {
-    error.value = e?.response?.data?.error || e.message || "Failed to load";
-  } finally {
-    loading.value = false;
-  }
-}
+  mounted() {
+    // If the user refreshes the page, set token again so API calls work
+    const token = localStorage.getItem("token");
+    if (token) setAuthToken(token);
 
-// Approve or reject a request, then reload data
-async function decide(userId, decision) {
-  error.value = "";
-  loading.value = true;
-  try {
-    await api.post(`/api/admin/room-requests/${userId}/decide`, { decision });
-    await loadAll();
-  } catch (e) {
-    error.value = e?.response?.data?.error || e.message || "Action failed";
-  } finally {
-    loading.value = false;
-  }
-}
-
-// Load data automatically when page opens
-onMounted(loadAll);
+    // Load data automatically when page opens
+    this.loadAll();
+  },
+};
 </script>

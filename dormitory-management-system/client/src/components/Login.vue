@@ -16,55 +16,57 @@
   </div>
 </template>
 
-<script setup>
-
+<script>
 // To create reactive variables
-import { ref } from "vue";
-
-// To change the page
-import { useRouter } from "vue-router";
-
-// To call the backend
 import api, { setAuthToken } from "../api";
 
-const router = useRouter();
+export default {
+  name: "Login",
 
-// Values from the form
-const username = ref("");
-const password = ref("");
+  data() {
+    return {
+      // Values from the form
+      username: "",
+      password: "",
 
-// User interface states
-const error = ref("");
-const loading = ref(false);
+      // User interface states
+      error: "",
+      loading: false,
+    };
+  },
 
-async function onLogin() {
-  // Rest messages dislayed to the user
-  error.value = "";
-  loading.value = true;
-  try {
-    // Call backend to log with username/password
-    const { data } = await api.post("/api/auth/login", {
-      username: username.value,
-      password: password.value
-    });
+  methods: {
+    async onLogin() {
+      // Rest messages dislayed to the user
+      this.error = "";
+      this.loading = true;
 
-    // Save token and user in browser storage so refresh does not log out
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    
-    // Add token to all future API requests 
-    setAuthToken(data.token);
+      try {
+        // Call backend to log with username/password
+        const { data } = await api.post("/api/auth/login", {
+          username: this.username,
+          password: this.password,
+        });
 
-    // Decide where to go depending on role
-    const role = data.user.role;
-    if (role === "admin") await router.push("/admin");
-    else await router.push("/dashboard");
+        // Save token and user in browser storage so refresh does not log out
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        
+        // Add token to all future API requests 
+        setAuthToken(data.token);
 
-  } catch (e) {
-    // If login fails, show error message
-    error.value = e?.response?.data?.error || e.message || "Login failed";
-  } finally {
-    loading.value = false;
-  }
-}
+        // Decide where to go depending on role
+        const role = data.user.role;
+        if (role === "admin") await this.$router.push("/admin");
+        else await this.$router.push("/dashboard");
+
+      } catch (e) {
+        // If login fails, show error message
+        this.error = e?.response?.data?.error || e.message || "Login failed";
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+};
 </script>
